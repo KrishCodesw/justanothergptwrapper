@@ -1,0 +1,75 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma" // Matches your structure
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+enum AuthProvider {
+  EMAIL_PASSWORD
+  GOOGLE
+  GITHUB
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+  DELETED
+}
+
+// --- CORE USER DATA ---
+model User {
+  id          String     @id @default(uuid())
+  email       String     @unique // Index: @unique creates an index
+  full_name   String
+  status      UserStatus @default(ACTIVE)
+  customer_id String?    @unique
+  price_id    String?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  // RELATIONS
+  accounts Account[]
+  sessions Session[]
+}
+
+// --- AUTHENTICATION CREDENTIALS ---
+model Account {
+  providerId       String
+  provider         AuthProvider
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  password_hash    String?
+  provider_user_id String
+
+  // PRIMARY KEY (for finding account by provider + provider-specific ID)
+  @@id([provider, provider_user_id])
+  // Index 1: For finding ALL accounts belonging to a user
+  @@index([userId])
+  // Index 2: For finding Email/Password account by email (providerId)
+  @@index([provider, providerId])
+}
+
+// --- SESSION (for tracking logged-in users) ---
+model Session {
+  id         String   @id @default(uuid()) // The session token
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires_at DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @map("last_used_at")
+  ip_address String?
+  user_agent String?
+
+  // Index 1: For finding a user's sessions
+  @@index([userId])
+  // Index 2: For efficiently cleaning up expired sessions
+  @@index([expires_at])
+}
