@@ -19,7 +19,7 @@ function DashboardContent() {
   return (
     <div>
       {/* user is guaranteed to exist here because of ProtectedRoute */}
-      <h1>Welcome, {user?.full_name}!</h1>
+      <h1>Welcome, sir {user?.full_name}!</h1>
       <p>Your email is: {user?.email}</p>
       <button onClick={handleLogout}>Log Out</button>
     </div>
