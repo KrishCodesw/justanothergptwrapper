@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
 import { AuthInitializer } from "@/components/AuthInitializer";
+import Navbar from "@/components/ui/Navbar";
+import { Footer } from "@/components/ui/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +32,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthInitializer />
+        <div className="flex justify-center">
+          <Navbar />
+        </div>
         {children}
+        <div className="flex justify-center">
+          <Footer />
+        </div>
       </body>
     </html>
   );
