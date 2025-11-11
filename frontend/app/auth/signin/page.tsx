@@ -13,7 +13,7 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
-  // Get the fetchUser action from the store
+
   const { fetchUser } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,9 +27,8 @@ export default function SignInPage() {
     });
 
     if (response.ok) {
-      // Success! Fetch the user to update the global state
       await fetchUser();
-      // Redirect to the dashboard
+
       router.push("/dashboard");
     } else {
       const data = await response.json();
