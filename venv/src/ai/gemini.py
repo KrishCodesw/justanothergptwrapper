@@ -2,6 +2,9 @@ import os
 from google.generativeai import types
 import google.generativeai as genai
 from .base import AIPlatform
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Gemini(AIPlatform):
     def __init__(self   ,api_key:str,system_prompt:str=None):
