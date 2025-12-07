@@ -1,5 +1,3 @@
-import os 
-from google.generativeai import types
 import google.generativeai as genai
 from .base import AIPlatform
 from dotenv import load_dotenv

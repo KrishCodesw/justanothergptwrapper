@@ -1,7 +1,6 @@
 // app/api/auth/signup/route.ts
 
 import { NextResponse } from 'next/server';
-import { Prisma } from "@prisma/client";
 import { prisma } from '@/lib/prismaClient';
 import { hashPassword } from '@/lib/auth.utils';
 import { AuthProvider, UserStatus } from '@/lib/generated/prisma/enums';
