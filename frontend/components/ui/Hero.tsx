@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion"; // For the smooth entry
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { useHistory } from "../hooks/useHistory";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"; // VS Code Dark Theme
 import {
   Copy,
@@ -14,12 +15,18 @@ import {
 } from "lucide-react";
 
 export default function HeroSection() {
+  const { history, addToHistory, removeHistoryItem, isLoaded } = useHistory();
   const [activeTab, setActiveTab] = useState("query");
   const [input, setInput] = useState("");
   const [schema, setSchema] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const savedSchema = localStorage.getItem("sql_active_schema");
+    if (savedSchema) setSchema(savedSchema);
+  }, []);
 
   const handleGenerate = async () => {
     if (!input.trim()) return;
@@ -31,6 +38,7 @@ export default function HeroSection() {
     }
 
     setLoading(true);
+    localStorage.setItem("sql_active_schema", schema);
     setOutput("");
 
     const combinedPrompt = `
@@ -64,7 +72,11 @@ ${input}
       setLoading(false);
     }
   };
-
+  const loadSession = (item: any) => {
+    setInput(item.query);
+    setOutput(item.sql);
+    setSchema(item.schema);
+  };
   const copyToClipboard = () => {
     navigator.clipboard.writeText(output);
     setCopied(true);
@@ -151,34 +163,6 @@ ${input}
                   )}
                 </button>
               </div>
-
-              {/* Output Section */}
-              {/* {output && (
-                <div className="space-y-2 pt-4 border-t border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-600">
-                      Generated SQL
-                    </label>
-                    <button
-                      onClick={copyToClipboard}
-                      className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-black transition-colors"
-                    >
-                      {copied ? (
-                        <Check className="w-3.5 h-3.5" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5" />
-                      )}
-                      {copied ? "Copied" : "Copy Code"}
-                    </button>
-                  </div>
-                  <div className="relative group">
-                    <pre className="w-full p-4 bg-gray-900 text-gray-100 rounded-lg overflow-x-auto text-sm font-mono border border-gray-800">
-                      <code>{output}</code>
-                    </pre>
-                  </div>
-                </div>
-              )} */}
-              {/* OUTPUT SECTION */}
               <AnimatePresence>
                 {output && (
                   <motion.div
