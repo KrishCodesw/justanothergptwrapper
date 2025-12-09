@@ -43,3 +43,35 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+
+
+export async function getCurrentUser() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(COOKIE_NAME);
+
+    if (!token) return null;
+
+    // Look up the session in the DB
+    const session = await prisma.session.findUnique({
+      where: { id: token.value },
+      include: {
+        user: {
+          select: { id: true } // We only need the ID for linking queries
+        }
+      }
+    });
+
+    // Check validity
+    if (!session || session.expires_at < new Date()) {
+      return null;
+    }
+
+    return session.user.id;
+
+  } catch (error) {
+    console.error('GET_CURRENT_USER_ERROR', error);
+    return null;
+  }
+}

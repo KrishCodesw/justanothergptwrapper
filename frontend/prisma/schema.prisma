@@ -37,6 +37,7 @@ model User {
 
   // RELATIONS
   accounts Account[]
+  queries  GeneratedQuery[]
   sessions Session[]
 }
 
@@ -72,4 +73,17 @@ model Session {
   @@index([userId])
   // Index 2: For efficiently cleaning up expired sessions
   @@index([expires_at])
+}
+
+model GeneratedQuery {
+  id           String   @id @default(uuid())
+  prompt       String
+  sql          String   @db.Text
+  sourceSchema String   @db.Text
+  created_at   DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
