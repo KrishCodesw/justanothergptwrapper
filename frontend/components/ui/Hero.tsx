@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion"; // For the smooth entry
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"; // VS Code Dark Theme
 import {
   Copy,
   Check,
   ArrowRight,
   Loader2,
   Database,
-  MessageSquare,
+  MessageCircle,
 } from "lucide-react";
 
 export default function HeroSection() {
@@ -70,7 +73,7 @@ ${input}
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans text-gray-900">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+      <div className="w-full max-w-3xl  sm:max-w-5xl bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
         <div className="flex border-b border-gray-100 bg-gray-50/50">
           <button
             onClick={() => setActiveTab("query")}
@@ -80,7 +83,7 @@ ${input}
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageCircle className="w-4 h-4" />
             Query
           </button>
           <button
@@ -150,7 +153,7 @@ ${input}
               </div>
 
               {/* Output Section */}
-              {output && (
+              {/* {output && (
                 <div className="space-y-2 pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-gray-600">
@@ -174,7 +177,105 @@ ${input}
                     </pre>
                   </div>
                 </div>
-              )}
+              )} */}
+              {/* OUTPUT SECTION */}
+              <AnimatePresence>
+                {output && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="w-full mt-8"
+                  >
+                    {/* THE "TERMINAL" WINDOW CONTAINER */}
+                    <div className="relative rounded-xl overflow-hidden bg-[#1e1e1e] border border-gray-800 shadow-2xl ring-1 ring-white/10">
+                      {/* WINDOW HEADER (Mac Style) */}
+                      <div className="flex items-center justify-between px-4 py-3 bg-[#252526] border-b border-gray-800">
+                        {/* Window Controls */}
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-500 transition-colors" />
+                          <div className="w-3 h-3 rounded-full bg-yellow-500/80 hover:bg-yellow-500 transition-colors" />
+                          <div className="w-3 h-3 rounded-full bg-green-500/80 hover:bg-green-500 transition-colors" />
+                        </div>
+
+                        {/* Filename Label */}
+                        <div className="text-xs font-mono text-gray-400 flex items-center gap-2">
+                          <Database className="w-3 h-3" />
+                          <span>generated_query.sql</span>
+                        </div>
+
+                        {/* Action Button (Copy) */}
+                        <button
+                          onClick={copyToClipboard}
+                          className={`
+              flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-md transition-all duration-200
+              ${
+                copied
+                  ? "bg-green-500/10 text-green-400 ring-1 ring-green-500/50"
+                  : "bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white ring-1 ring-gray-700"
+              }
+            `}
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy SQL</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* CODE BODY */}
+                      <div className="relative group">
+                        {/* The Syntax Highlighter */}
+                        <SyntaxHighlighter
+                          language="sql"
+                          style={vscDarkPlus}
+                          customStyle={{
+                            margin: 0,
+                            padding: "1.5rem",
+                            background: "transparent", // Use container bg
+                            fontSize: "0.9rem",
+                            lineHeight: "1.6",
+                            fontFamily:
+                              "'JetBrains Mono', 'Fira Code', monospace", // If you have these fonts
+                          }}
+                          showLineNumbers={true}
+                          lineNumberStyle={{
+                            minWidth: "2.5em",
+                            paddingRight: "1em",
+                            color: "#6e7681",
+                            textAlign: "right",
+                          }}
+                          wrapLines={true}
+                        >
+                          {output}
+                        </SyntaxHighlighter>
+
+                        {/* Optional: Subtle Overlay for "Focus" effect */}
+                        <div className="pointer-events-none absolute inset-0   from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      </div>
+                    </div>
+
+                    {/* FOOTER NOTE (Optional Trust Builder) */}
+                    <div className="mt-3 flex justify-end gap-4 text-xs text-gray-400">
+                      <span className="flex items-center gap-1 hover:text-gray-600 transition-colors cursor-pointer">
+                        Running on PostgreSQL dialect
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 hover:text-gray-600 transition-colors cursor-pointer">
+                        {output.split("\n").length} lines
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>

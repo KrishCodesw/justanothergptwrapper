@@ -141,6 +141,8 @@ When you receive a database schema, carefully examine:
 -- Brief description of what this query does
 -- Assumptions: [List any assumptions made]
 
+-- Final Query:
+
 SELECT 
     [columns]
 FROM 

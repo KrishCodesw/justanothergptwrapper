@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 
 import { AuthInitializer } from "@/components/AuthInitializer";
-import Navbar from "@/components/ui/Navbar";
+// import Navbar from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
 
 const geistSans = Geist({
@@ -36,9 +36,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${manrope.variable}  `}>
         <AuthInitializer />
-        <div className="flex justify-center">
-          <Navbar />
-        </div>
+        <div className="flex justify-center">{/* <Navbar /> */}</div>
         {children}
         <div className="flex justify-center">
           <Footer />
