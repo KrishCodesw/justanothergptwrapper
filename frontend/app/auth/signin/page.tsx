@@ -29,7 +29,7 @@ export default function SignInPage() {
     if (response.ok) {
       await fetchUser();
 
-      router.push("/dashboard");
+      router.push("/");
     } else {
       const data = await response.json();
       setError(data.error || "Sign in failed");

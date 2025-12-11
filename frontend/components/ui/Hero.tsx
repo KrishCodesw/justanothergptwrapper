@@ -21,7 +21,7 @@ import {
 
 const GUEST_LIMIT = 2; // <--- 1. DEFINE THE LIMIT
 
-export default function HeroSection() {
+export default function HeroSection({ isPro }: { isPro?: boolean }) {
   const { history, addToHistory, removeHistoryItem, isLoaded } = useHistory();
   const [activeTab, setActiveTab] = useState("query");
   const [input, setInput] = useState("");
@@ -37,6 +37,18 @@ export default function HeroSection() {
     const savedSchema = localStorage.getItem("sql_active_schema");
     if (savedSchema) setSchema(savedSchema);
   }, []);
+
+  useEffect(() => {
+    if (isPro) {
+      fetch("api/queries/get")
+        .then((res) => {
+          res.json;
+        })
+        .then((data) => {
+          console.log("Loaded DB History:", data);
+        });
+    }
+  }, [isPro]);
 
   const handleGenerate = async () => {
     if (!input.trim()) return;
@@ -71,12 +83,39 @@ ${input}
       const data = await response.json();
 
       // --- 2. THE LIMIT LOGIC ---
-      if (history.length < GUEST_LIMIT) {
+      if (isPro || history.length < GUEST_LIMIT) {
         // If under limit, save as usual
-        addToHistory(input, data.response, schema);
+        // addToHistory(input, data.response, schema);
+        try {
+          await fetch("/api/queries/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: input,
+              sql: data.response,
+              schema: schema,
+            }),
+          });
+
+          // OPTIONAL: You might want to refresh your sidebar list here
+          // fetchQueries();
+
+          // For now, we can optimistically add it to the UI view
+          // Note: addToHistory saves to localStorage. If you use this for Pros,
+          // it works for UI but might cause duplicates during Sync.
+          // Ideally, Pros should fetch history from the DB (see Step 3 below).
+          addToHistory(input, data.response, schema);
+        } catch (saveError) {
+          console.error("Failed to save query to DB", saveError);
+        }
       } else {
         // If limit reached, DO NOT save, and show modal
-        setShowLimitModal(true);
+        // setShowLimitModal(true);
+        if (history.length < GUEST_LIMIT) {
+          addToHistory(input, data.response, schema);
+        } else {
+          setShowLimitModal(true);
+        }
       }
       // --------------------------
 
@@ -110,7 +149,7 @@ ${input}
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden relative">
       {/* --- SIDEBAR --- */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col hidden md:flex z-10">
+      <div className="w-80 bg-white border-r border-gray-200  flex-col hidden md:flex z-10">
         <div className="p-4 border-b border-gray-100">
           <button
             onClick={() => {
@@ -128,8 +167,9 @@ ${input}
           <div className="flex items-center justify-between px-2 mb-3">
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <History className="w-3 h-3" />
-              Guest History
+              {isPro ? "History" : "Guest History"}
             </div>
+
             {/* 3. VISUAL COUNTER */}
             <div
               className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${

@@ -64,6 +64,7 @@ export function useHistory() {
     addToHistory,
     removeHistoryItem,
     clearHistory,
+    setHistory,
     isLoaded // Use this to show a skeleton loader if needed
   };
 }
