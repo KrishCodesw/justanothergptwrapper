@@ -1,7 +1,7 @@
 # GetSQL: Natural Language to SQL Platform
 
 **Turn plain English into complex SQL queries instantly.**
-NLP2SQL is a robust, full-stack application designed to bridge the gap between human thought and database logic. It uses advanced LLMs (Google Gemini) to understand your specific database schema and generate accurate, optimized SQL queries.
+GetSQL is a robust, full-stack application designed to bridge the gap between human thought and database logic. It uses advanced LLMs (Google Gemini) to understand your specific database schema and generate accurate, optimized SQL queries.
 
 ![Project Banner](https://github.com/KrishCodesw/justanothergptwrapper/blob/main/banner.png)
 
@@ -54,6 +54,7 @@ The application follows a modern, containerized microservices architecture. It s
 ### **Database & DevOps**
 * **Database:** PostgreSQL
 * **ORM:** Prisma
+* **Containerization:** Docker
 
 
 ---
@@ -74,7 +75,7 @@ Create a .env file in the root directory:
 
 Code snippet
 
-# .env file
+3. .env file
 ```bash
 # Database (Neon.tech URL)
 DATABASE_URL="postgresql://user:password@db:5432/slang_db" 
@@ -90,7 +91,7 @@ NEXT_PUBLIC_API_URL="http://localhost:8000"
 npx prisma generate
 npm run dev
 ```
-3. Backend setup
+4. Backend setup
 ```bash
 cd ..
 cd venv 
