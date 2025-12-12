@@ -3,16 +3,17 @@
 **Turn plain English into complex SQL queries instantly.**
 NLP2SQL is a robust, full-stack application designed to bridge the gap between human thought and database logic. It uses advanced LLMs (Google Gemini) to understand your specific database schema and generate accurate, optimized SQL queries.
 
-![Project Banner](https://via.placeholder.com/1200x300?text=NLP2SQL+Dashboard+Preview)
+![Project Banner](https://github.com/KrishCodesw/justanothergptwrapper/blob/main/banner.png)
 *(Note: Replace the link above with a screenshot of your actual dashboard)*
+
 
 ---
 
-## 🏗 System Architecture
+##  System Architecture
 
 The application follows a modern, containerized microservices architecture. It separates the AI processing engine (Python) from the application logic (Node.js), using a shared PostgreSQL database for persistence.
 
-![System Architecture Diagram](./assets/architecture_diagram.png)
+![System Architecture Diagram](https://github.com/KrishCodesw/justanothergptwrapper/blob/main/sd.png)
 *(Note: Place your Mermaid diagram screenshot or exported image here)*
 
 ### **Flow Overview:**
@@ -23,7 +24,7 @@ The application follows a modern, containerized microservices architecture. It s
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 * **Schema-Aware Generation:** Paste your `CREATE TABLE` scripts, and the AI generates SQL specifically for your database structure.
 * **Hybrid "Guest" & "Pro" Modes:**
@@ -39,32 +40,72 @@ The application follows a modern, containerized microservices architecture. It s
 
 ### **Frontend**
 * **Framework:** Next.js 14+ (App Router)
+* **Auth:** Email Password + Google Signin 
 * **Language:** TypeScript
-* **Styling:** Tailwind CSS, Framer Motion
+* **Styling:** Tailwind CSS
 * **State Management:** Zustand
 * **Icons:** Lucide React
 
 ### **Backend & AI**
 * **API Framework:** FastAPI (Python)
-* **AI Model:** Google Gemini 1.5 Flash
+* **AI Model:** Google Gemini 2.5 Flash
 * **Orchestration:** Uvicorn
 
 ### **Database & DevOps**
 * **Database:** PostgreSQL
 * **ORM:** Prisma
-* **Containerization:** Docker & Docker Compose
+
 
 ---
 
-## 🚀 Getting Started
-
-The easiest way to run the entire stack is using **Docker Compose**.
-
-### **Prerequisites**
-* Docker & Docker Compose installed.
-* A Google Gemini API Key (Get it from [Google AI Studio](https://aistudio.google.com/)).
+##  Getting Started
 
 ### **1. Clone the Repository**
 ```bash
-git clone [https://github.com/yourusername/nlp2sql.git](https://github.com/yourusername/nlp2sql.git)
-cd nlp2sql
+git clone [https://github.com/KrishCodesw/justanothergptwrapper.git](https://github.com/KrishCodesw/justanothergptwrapper.git)
+cd justanothergptwrapper
+
+cd frontend 
+npm ci 
+```
+
+2. Environment Setup
+Create a .env file in the root directory:
+
+Code snippet
+
+# .env file
+
+# Database (Neon.tech URL)
+DATABASE_URL="postgresql://user:password@db:5432/slang_db" 
+
+# AI Configuration
+GEMINI_API_KEY="your_actual_google_api_key_here"
+
+# Frontend Configuration
+NEXT_PUBLIC_API_URL="http://localhost:8000"
+
+```bash
+npx prisma generate
+npm run dev
+```
+3. Backend setup
+```bash
+cd ..
+cd venv 
+pip install -r requirements.txt
+uvicorn src.main:app --reload --port 8000
+```
+
+Contributing
+Contributions are welcome! Please follow these steps:
+
+Fork the project.
+
+Create your feature branch (git checkout -b feature/AmazingFeature).
+
+Commit your changes (git commit -m 'Add some AmazingFeature').
+
+Push to the branch (git push origin feature/AmazingFeature).
+
+Open a Pull Request.
