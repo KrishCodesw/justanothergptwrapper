@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useHistory } from "@/components/hooks/useHistory";
 import HeroSection from "@/components/ui/Hero";
-import { LogOut, User, CheckCircle2 } from "lucide-react";
+import { LogOut, User, CheckCircle2, Layers } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -58,13 +58,12 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-white">
       {/* HEADER: Changes based on Auth State */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white z-20 shadow-sm">
+      <header className="flex items-center justify-between px-6 py-3 border-b border-white bg-white z-20 ">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold"></div>
-          <span className="font-semibold text-gray-800">
-            {user ? "NLP2SQL" : "NLP2SQL"}
+          <span className="font-semibold text-2xl text-gray-800">
+            {user ? "GetSQL" : "GetSQL"}
           </span>
         </div>
 

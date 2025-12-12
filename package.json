@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@types/mermaid": "^9.1.0"
+  }
+}
