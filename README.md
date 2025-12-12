@@ -75,7 +75,7 @@ Create a .env file in the root directory:
 Code snippet
 
 # .env file
-
+```bash
 # Database (Neon.tech URL)
 DATABASE_URL="postgresql://user:password@db:5432/slang_db" 
 
@@ -84,6 +84,7 @@ GEMINI_API_KEY="your_actual_google_api_key_here"
 
 # Frontend Configuration
 NEXT_PUBLIC_API_URL="http://localhost:8000"
+```
 
 ```bash
 npx prisma generate
@@ -96,16 +97,3 @@ cd venv
 pip install -r requirements.txt
 uvicorn src.main:app --reload --port 8000
 ```
-
-Contributing
-Contributions are welcome! Please follow these steps:
-
-Fork the project.
-
-Create your feature branch (git checkout -b feature/AmazingFeature).
-
-Commit your changes (git commit -m 'Add some AmazingFeature').
-
-Push to the branch (git push origin feature/AmazingFeature).
-
-Open a Pull Request.
