@@ -15,22 +15,23 @@ import {
   Trash2,
   Plus,
   History,
-  Lock, // NEW: Import Lock icon
-  X, // NEW: Import X for modal
+  Lock,
+  X,
 } from "lucide-react";
 
-const GUEST_LIMIT = 2; // <--- 1. DEFINE THE LIMIT
+const GUEST_LIMIT = 2;
 
 export default function HeroSection({ isPro }: { isPro?: boolean }) {
-  const { history, addToHistory, removeHistoryItem, isLoaded } = useHistory();
+  // CHANGE 1: We destructure `setHistory` here
+  const { history, addToHistory, removeHistoryItem, isLoaded, setHistory } =
+    useHistory();
+
   const [activeTab, setActiveTab] = useState("query");
   const [input, setInput] = useState("");
   const [schema, setSchema] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  // NEW: State for the Limit Modal
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   useEffect(() => {
@@ -38,17 +39,34 @@ export default function HeroSection({ isPro }: { isPro?: boolean }) {
     if (savedSchema) setSchema(savedSchema);
   }, []);
 
+  // CHANGE 2: Fix the Fetch Logic (Mapping DB fields to UI fields)
   useEffect(() => {
     if (isPro) {
-      fetch("api/queries/get")
+      console.log("Fetching DB History...");
+      fetch("/api/queries/get")
         .then((res) => {
-          res.json;
+          if (!res.ok) throw new Error("Failed to fetch history");
+          return res.json(); // <--- Fixed syntax error here
         })
         .then((data) => {
           console.log("Loaded DB History:", data);
-        });
+
+          // Map backend fields to frontend format
+          // Backend: { id, prompt, sourceSchema, sql, createdAt }
+          // Frontend: { id, query, schema, sql, timestamp }
+          const formattedHistory = data.map((item: any) => ({
+            id: item.id,
+            query: item.prompt,
+            sql: item.sql,
+            schema: item.sourceSchema,
+            timestamp: new Date(item.createdAt).getTime(),
+          }));
+
+          setHistory(formattedHistory);
+        })
+        .catch((err) => console.error(err));
     }
-  }, [isPro]);
+  }, [isPro, setHistory]);
 
   const handleGenerate = async () => {
     if (!input.trim()) return;
@@ -60,6 +78,7 @@ export default function HeroSection({ isPro }: { isPro?: boolean }) {
     }
 
     setLoading(true);
+    setTimeout(() => setLoading(false), 3000);
     localStorage.setItem("sql_active_schema", schema);
     setOutput("");
 
@@ -82,10 +101,9 @@ ${input}
 
       const data = await response.json();
 
-      // --- 2. THE LIMIT LOGIC ---
-      if (isPro || history.length < GUEST_LIMIT) {
-        // If under limit, save as usual
-        // addToHistory(input, data.response, schema);
+      // --- 3. SAVE LOGIC ---
+      if (isPro) {
+        // --- PATH A: PRO USER (Save to DB) ---
         try {
           await fetch("/api/queries/save", {
             method: "POST",
@@ -97,27 +115,20 @@ ${input}
             }),
           });
 
-          // OPTIONAL: You might want to refresh your sidebar list here
-          // fetchQueries();
-
-          // For now, we can optimistically add it to the UI view
-          // Note: addToHistory saves to localStorage. If you use this for Pros,
-          // it works for UI but might cause duplicates during Sync.
-          // Ideally, Pros should fetch history from the DB (see Step 3 below).
+          // Update UI immediately (Optimistic update)
           addToHistory(input, data.response, schema);
         } catch (saveError) {
           console.error("Failed to save query to DB", saveError);
         }
       } else {
-        // If limit reached, DO NOT save, and show modal
-        // setShowLimitModal(true);
+        // --- PATH B: GUEST USER (Local Storage + Limits) ---
         if (history.length < GUEST_LIMIT) {
           addToHistory(input, data.response, schema);
         } else {
           setShowLimitModal(true);
         }
       }
-      // --------------------------
+      // ---------------------
 
       setOutput(data.response);
     } catch (error) {
@@ -142,14 +153,13 @@ ${input}
   };
 
   const handleRedirectToLogin = () => {
-    // Replace with your actual login redirect
     window.location.href = "/auth/signin";
   };
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden relative">
       {/* --- SIDEBAR --- */}
-      <div className="w-80 bg-white border-r border-gray-200  flex-col hidden md:flex z-10">
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col  md:flex z-10">
         <div className="p-4 border-b border-gray-100">
           <button
             onClick={() => {
@@ -170,16 +180,18 @@ ${input}
               {isPro ? "History" : "Guest History"}
             </div>
 
-            {/* 3. VISUAL COUNTER */}
-            <div
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                history.length >= GUEST_LIMIT
-                  ? "bg-red-100 text-red-600"
-                  : "bg-gray-100 text-gray-600"
-              }`}
-            >
-              {history.length} / {GUEST_LIMIT} Free
-            </div>
+            {/* CHANGE 4: Hide counter if Pro */}
+            {!isPro && (
+              <div
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  history.length >= GUEST_LIMIT
+                    ? "bg-red-100 text-red-600"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {history.length} / {GUEST_LIMIT} Free
+              </div>
+            )}
           </div>
 
           {!isLoaded ? (
@@ -218,8 +230,8 @@ ${input}
             </div>
           )}
 
-          {/* LIMIT REACHED BANNER IN SIDEBAR */}
-          {history.length >= GUEST_LIMIT && (
+          {/* CHANGE 5: Only show Limit Banner if NOT Pro */}
+          {!isPro && history.length >= GUEST_LIMIT && (
             <div className="mt-4 mx-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
               <Lock className="w-4 h-4 text-gray-400 mx-auto mb-2" />
               <p className="text-xs text-gray-500 mb-2">Guest limit reached.</p>
@@ -237,9 +249,8 @@ ${input}
       {/* --- MAIN CONTENT AREA --- */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
-          {/* ... (Existing Card Component Code - No Changes Here) ... */}
           <div className="w-full max-w-4xl h-fit bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-            {/* ... Your Existing Header Tabs ... */}
+            {/* ... Existing Headers & Inputs (No Changes Needed) ... */}
             <div className="flex border-b border-gray-100 bg-gray-50/50">
               <button
                 onClick={() => setActiveTab("query")}
@@ -369,9 +380,10 @@ ${input}
         </div>
       </div>
 
-      {/* --- 4. THE LIMIT MODAL --- */}
+      {/* --- LIMIT MODAL --- */}
+      {/* CHANGE 6: Ensure modal never shows if Pro */}
       <AnimatePresence>
-        {showLimitModal && (
+        {showLimitModal && !isPro && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
