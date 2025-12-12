@@ -4,7 +4,7 @@
 NLP2SQL is a robust, full-stack application designed to bridge the gap between human thought and database logic. It uses advanced LLMs (Google Gemini) to understand your specific database schema and generate accurate, optimized SQL queries.
 
 ![Project Banner](https://github.com/KrishCodesw/justanothergptwrapper/blob/main/banner.png)
-*(Note: Replace the link above with a screenshot of your actual dashboard)*
+
 
 
 ---
@@ -14,11 +14,11 @@ NLP2SQL is a robust, full-stack application designed to bridge the gap between h
 The application follows a modern, containerized microservices architecture. It separates the AI processing engine (Python) from the application logic (Node.js), using a shared PostgreSQL database for persistence.
 
 ![System Architecture Diagram](https://github.com/KrishCodesw/justanothergptwrapper/blob/main/sd.png)
-*(Note: Place your Mermaid diagram screenshot or exported image here)*
+
 
 ### **Flow Overview:**
 1.  **Frontend (Next.js):** Manages UI state, user authentication, and optimistic updates.
-2.  **AI Engine (FastAPI):** Receives the prompt + schema, handles rate limiting (exponential backoff), and communicates with Google Gemini.
+2.  **AI Engine (FastAPI):** Receives the prompt + schema, handles rate limiting , and communicates with Google Gemini.
 3.  **Data Layer (PostgreSQL):** Stores user history, saved queries, and user profiles via Prisma ORM.
 4.  **Sync Engine:** A dedicated logic flow that detects when a Guest user logs in and automatically pushes their local history to the persistent database.
 
@@ -31,7 +31,7 @@ The application follows a modern, containerized microservices architecture. It s
     * **Guest:** No login required. History saved to LocalStorage. Limited to 2 queries.
     * **Pro:** Persistent database storage, unlimited queries, and cross-device history synchronization.
 * **Smart Synchronization:** Seamlessly migrates your guest queries to your account immediately upon sign-up/login.
-* **Resilient AI Layer:** Built-in exponential backoff to handle API rate limits gracefully without crashing.
+* **Resilient AI Layer:** Built to handle API rate limits gracefully without crashing.
 * **Premium UI/UX:** A minimalist, "Pro Workspace" aesthetic with distraction-free inputs and syntax highlighting.
 
 ---
