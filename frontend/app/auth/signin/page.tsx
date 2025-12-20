@@ -29,7 +29,7 @@ export default function SignInPage() {
     if (response.ok) {
       await fetchUser();
 
-      router.push("/");
+      router.push("/nl2sql");
     } else {
       const data = await response.json();
       setError(data.error || "Sign in failed");
