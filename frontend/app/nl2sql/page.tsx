@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useHistory } from "@/components/hooks/useHistory";
 import HeroSection from "@/components/ui/Hero";
-import { LogOut, User, CheckCircle2, Layers } from "lucide-react";
+import { LogOut, User, CheckCircle2, HomeIcon } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -68,10 +68,16 @@ export default function HomePage() {
         </div>
 
         <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="text-sm flex gap-2 items-center font-medium bg-gray-100  text-black px-4 py-2 rounded-full  transition-colors"
+          >
+            <HomeIcon className="w-4 h-4" /> Home
+          </Link>
           {user ? (
             // LOGGED IN VIEW
             <>
-              <div className="flex items-center gap-2 text-sm text-gray-600 px-3 py-1.5 bg-gray-100 rounded-full">
+              <div className="flex items-center gap-2 text-sm text-black px-3 py-1.5 bg-gray-100 rounded-full">
                 <User className="w-4 h-4" />
                 <span className="font-medium">{user.full_name || "User"}</span>
               </div>
