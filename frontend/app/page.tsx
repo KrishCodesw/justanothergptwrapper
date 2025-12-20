@@ -16,7 +16,7 @@ const LandingPage = () => {
         "Generate complex SQL queries from plain English prompts and your database schema instantly.",
       icon: <Database className="w-6 h-6" />,
       status: "Live",
-      link: "/generate",
+      link: "/nl2sql",
       primary: true,
     },
     {
@@ -46,10 +46,10 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-black  selection:bg-green-300">
+    <div className="min-h-screen bg-white text-black   selection:bg-green-300">
       {/* Navbar */}
       <nav className="max-w-7xl mx-auto px-6 py-8 flex justify-center items-center">
-        <div className="text-2xl font-semibold tracking-wider ">
+        <div className="text-2xl font-semibold hover:bg-amber-600 hover:animate-pulse rounded-2xl transition-all duration-300 ease-in-out  tracking-wider ">
           SQL<span className="text-amber-800"> AI</span>
         </div>
       </nav>
@@ -61,18 +61,21 @@ const LandingPage = () => {
             <br />
             <span className="text-amber-800 ">with natural language.</span>
           </h1>
-          <p className="text-xl  text-black leading-relaxed max-w-xl">
-            A suite of AI-powered tools designed to help you generate, correct,
-            explain, and optimize SQL queries without the headache.
+          <p className="transition-all duration-300 ease-in-out text-xl  text-black leading-relaxed max-w-xl">
+            The all-in-one toolkit for generating and fixing SQL, eliminating
+            the need to browse endless documentation.
+            {/* A suite of AI-powered tools designed to help you generate, correct,
+            explain, and optimize SQL queries without the hassle of surfing
+            multiple articles and sites on the internet. */}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
           {tools.map((tool, index) => (
             <div
               key={index}
               className={`
-                group relative p-8 rounded-2xl border transition-all duration-300
+                group relative p-8 rounded-lg border transition-all duration-300
                 ${
                   tool.primary
                     ? "bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300"
