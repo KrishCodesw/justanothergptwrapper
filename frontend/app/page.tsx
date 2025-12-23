@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
+import AutoTypingText from "@/components/ui/AnimatedText";
 
 const LandingPage = () => {
   const tools = [
@@ -43,8 +44,8 @@ const LandingPage = () => {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 pt-10 pb-32">
-        <div className="max-w-3xl mb-24">
+      <main className="max-w-7xl  mx-auto px-6 pt-10 pb-32">
+        <div className="max-w-3xl  mb-24">
           <h1 className="text-2xl   sm:text-5xl font-semibold tracking-wide mb-8 leading-tight">
             Get Your Queries Instantly
             <br />
@@ -91,22 +92,10 @@ const LandingPage = () => {
             </div>
           ))}
         </div>
-      </main>
-
-      {/* Simple Footer */}
-      <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-slate-200">
-        <div className="flex justify-between items-center text-slate-400 text-sm">
-          <p>&copy; 2025 SQL AI Suite</p>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-slate-900 transition-colors">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-slate-900 transition-colors">
-              Terms
-            </a>
-          </div>
+        <div className="transition-all   duration-500 ease-in-out  hover:tracking-widest text-xl  text-black leading-relaxed ">
+          <AutoTypingText />
         </div>
-      </footer>
+      </main>
     </div>
   );
 };
