@@ -139,12 +139,11 @@ export default function QueryCorrector({
         confidence: rawData.confidence || 0,
       };
 
-      setOutput(processedData);
+      //_______________________________________________________________________________________________________________________________________________________________________
 
-      // Add to history (local or handle via backend depending on architecture)
-      // If user is logged in, you might want to save to DB here.
-      // For now, we keep using the hook, and assuming the hook might handle DB if updated,
-      // or we just rely on local state for the UI session.
+      setOutput(processedData);
+      //_______________________________________________________________________________________________________________________________________________________________________
+
       addToHistory(input, processedData.corrected);
     } catch (err) {
       console.error(err);

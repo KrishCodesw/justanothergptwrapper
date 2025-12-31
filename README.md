@@ -98,3 +98,73 @@ cd venv
 pip install -r requirements.txt
 uvicorn src.main:app --reload --port 8000
 ```
+
+
+
+```bash
+  const handleGenerate = async () => {
+    if (!input.trim()) return;
+
+    if (!schema.trim()) {
+      alert("Please provide the Database Schema first.");
+      setActiveTab("schema");
+      return;
+    }
+
+    setLoading(true);
+    setTimeout(() => setLoading(false), 3000);
+    localStorage.setItem("sql_active_schema", schema);
+    setOutput("");
+
+    const combinedPrompt = `\n### DATABASE SCHEMA:\n${schema}\n\n### QUESTION:\n${input}\n    `;
+
+    try {
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: combinedPrompt }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate SQL");
+
+      const data = await response.json();
+
+      // --- 3. SAVE LOGIC ---
+      if (isPro) {
+        // --- PATH A: PRO USER (Save to DB) ---
+        try {
+          await fetch("/api/queries/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: input,
+              sql: data.response,
+              schema: schema,
+            }),
+          });
+
+          // Update UI immediately (Optimistic update)
+          addToHistory(input, data.response, schema);
+        } catch (saveError) {
+          console.error("Failed to save query to DB", saveError);
+        }
+      } else {
+        // --- PATH B: GUEST USER (Local Storage + Limits) ---
+        if (history.length < GUEST_LIMIT) {
+          addToHistory(input, data.response, schema);
+        } else {
+          setShowLimitModal(true);
+        }
+      }
+      // ---------------------
+
+      setOutput(data.response);
+    } catch (error) {
+      console.error(error);
+      setOutput("Error: Could not connect to backend.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+```
