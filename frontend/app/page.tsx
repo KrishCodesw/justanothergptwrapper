@@ -17,7 +17,7 @@ const LandingPage = () => {
       description:
         "Identify syntax errors or logical flaws in your SQL and get instant fixes.",
 
-      link: "#",
+      link: "/querycorrector",
     },
     {
       title: "Query Explainer",
@@ -73,7 +73,7 @@ const LandingPage = () => {
                 ${"bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300"}
               `}
             >
-              <a href="/nl2sql">
+              <a href={tool.link}>
                 <h3 className="group transition-all duration-500 ease-in-out text-2xl font-semibold mb-3 tracking-normal hover:tracking-widest group-hover:text-blue-600 flex items-center gap-2">
                   {tool.title}
 

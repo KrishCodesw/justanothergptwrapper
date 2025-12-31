@@ -143,7 +143,7 @@ export default function QueryCorrector({
 
       if (isPro) {
         try {
-          await fetch("/api/correctedqueries/save", {
+          await fetch("/corrected_queries/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -155,13 +155,13 @@ export default function QueryCorrector({
               changes_made: processedData.changes_made,
             }),
           });
-          addToHistory(input, rawData);
+          addToHistory(input, processedData.corrected);
         } catch (saveError) {
           console.error("Failed to save query to DB", saveError);
         }
       } else {
         if (history.length < GUEST_LIMIT) {
-          addToHistory(input, rawData);
+          addToHistory(input, processedData.corrected);
         } else {
           setShowLimitModal(true);
         }
@@ -170,7 +170,7 @@ export default function QueryCorrector({
       setOutput(processedData);
       //_______________________________________________________________________________________________________________________________________________________________________
 
-      addToHistory(input, processedData.corrected);
+      // addToHistory(input, processedData.corrected);
     } catch (err) {
       console.error(err);
       setOutput({
@@ -274,7 +274,7 @@ export default function QueryCorrector({
                     </button>
                   </div>
                   <span className="text-[10px] text-slate-400 mt-1">
-                    {new Date().toLocaleDateString()}
+                    {new Date(item.timestamp).toLocaleDateString()}
                   </span>
                 </div>
               ))}

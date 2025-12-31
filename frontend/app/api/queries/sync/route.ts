@@ -18,7 +18,7 @@ export async function POST(req:Request){
             data: guestHistory.map((item:any)=>({
                 prompt:item.query,
                 sql:item.sql,
-                sourceSchema:item.schema,
+                sourceSchema:item.schema??"unknown",
                 userId:userId,
                 createdAt:new Date(item.timestamp)
             }))
