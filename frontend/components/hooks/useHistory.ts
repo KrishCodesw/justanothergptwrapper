@@ -5,8 +5,9 @@ import { useState, useEffect } from "react";
 export interface HistoryItem {
   id: string;
   query: string;
-  sql: string;
+  sql: string|undefined;
   schema: any;
+  processedData:any;
   timestamp: number;
 }
 
@@ -32,11 +33,12 @@ export function useHistory() {
   }, []);
 
   // 2. SAVE: Helper to add item and persist
-  const addToHistory = (query: string, sql: string, schema?: string) => {
+  const addToHistory = (query: string, sql?: string|undefined, schema?: string,processedData?:any) => {
     const newItem: HistoryItem = {
       id: Date.now().toString(),
       query,
       sql,
+      processedData,
       schema,
       timestamp: Date.now(),
     };

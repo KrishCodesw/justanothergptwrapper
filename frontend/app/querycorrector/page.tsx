@@ -141,6 +141,32 @@ export default function QueryCorrector({
 
       //_______________________________________________________________________________________________________________________________________________________________________
 
+      if (isPro) {
+        try {
+          await fetch("/api/correctedqueries/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              original_query: processedData.original,
+              corrected_query: processedData.corrected,
+              type: processedData.type,
+              risk_level: processedData.risk_level,
+              confidence: processedData.confidence,
+              changes_made: processedData.changes_made,
+            }),
+          });
+          addToHistory(input, rawData);
+        } catch (saveError) {
+          console.error("Failed to save query to DB", saveError);
+        }
+      } else {
+        if (history.length < GUEST_LIMIT) {
+          addToHistory(input, rawData);
+        } else {
+          setShowLimitModal(true);
+        }
+      }
+
       setOutput(processedData);
       //_______________________________________________________________________________________________________________________________________________________________________
 
