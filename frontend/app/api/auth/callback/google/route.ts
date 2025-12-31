@@ -117,9 +117,9 @@ export async function GET(req: Request) {
     });
 
     // 6. Redirect user to your app's dashboard
-    return NextResponse.redirect(new URL('/nl2sql', appUrl));
+    return NextResponse.redirect(new URL('/', appUrl));
   } catch (error) {
     console.error('GOOGLE_CALLBACK_ERROR', error);
-    return NextResponse.redirect(new URL('/signin?error=oauth_failed', appUrl));
+    return NextResponse.redirect(new URL('/auth/signin?error=oauth_failed', appUrl));
   }
 }

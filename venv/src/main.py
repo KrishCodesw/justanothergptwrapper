@@ -71,9 +71,9 @@ class QueryCorrectorRequest(BaseModel):
 class QueryCorrectorResponse(BaseModel):
     original_query: str
     corrected_query: str
-    type: str  # syntax_fix | readability_improvement | semantic_correction | clarification_required
+    type: str 
     changes_made: List[str]
-    risk_level: str  # low | medium | high
+    risk_level: str 
     confidence: Optional[float]
 
 
