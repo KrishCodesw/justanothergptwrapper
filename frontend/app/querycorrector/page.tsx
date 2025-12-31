@@ -437,7 +437,7 @@ export default function QueryCorrector({
                       After <ArrowRight className="w-3 h-3" />
                     </span>
                     <div className="relative rounded-xl overflow-hidden bg-[#1e1e1e] shadow-lg shadow-indigo-500/10 border border-indigo-500/30 group">
-                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-50"></div>
+                      <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-indigo-500 to-purple-500 opacity-50"></div>
                       <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                         <button
                           onClick={() =>
