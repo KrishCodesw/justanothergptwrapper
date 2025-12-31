@@ -36,9 +36,10 @@ model User {
   updated_at  DateTime   @updatedAt
 
   // RELATIONS
-  accounts Account[]
-  queries  GeneratedQuery[]
-  sessions Session[]
+  accounts         Account[]
+  correctedQueries CorrectedQuery[]
+  queries          GeneratedQuery[]
+  sessions         Session[]
 }
 
 // --- AUTHENTICATION CREDENTIALS ---
@@ -82,6 +83,25 @@ model GeneratedQuery {
   sourceSchema String   @db.Text
   created_at   DateTime @default(now())
 
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CorrectedQuery {
+  id              String @id @default(uuid())
+  original_query  String @db.Text
+  corrected_query String @db.Text
+
+  type         String
+  risk_level   String
+  confidence   Float?
+  changes_made String[]
+
+  created_at DateTime @default(now())
+
+  // Relation to User
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
