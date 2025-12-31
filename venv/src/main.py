@@ -3,8 +3,38 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from src.ai.gemini import Gemini
+from src.ai.querycorrector import QueryCorrector
+from typing import List, Optional, Any
+from dotenv import load_dotenv
+load_dotenv()
 
-# load_dotenv()
+#Load system prompt 
+def load_system_prompt():
+    base_dir=os.path.dirname(os.path.abspath(__file__))
+    prompt_path=os.path.join(base_dir,"prompts","system_prompt.md")
+    with open(prompt_path,encoding="utf-8") as f:
+        return f.read()
+
+system_prompt=load_system_prompt()
+
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+
+# gemini = Gemini(api_key=gemini_api_key, system_prompt=system_prompt)
+
+ai_platform=Gemini(api_key=gemini_api_key,system_prompt=system_prompt)
+
+
+#Load query corrector prompt 
+
+def load_query_corrector_prompt():
+    base_dir=os.path.dirname(os.path.abspath(__file__))
+    prompt_path=os.path.join(base_dir,"prompts","query_correctorsystemprompt.md")
+    with open(prompt_path,encoding="utf-8") as f:
+        return f.read()
+    
+querycorrector_prompt=load_query_corrector_prompt()
+
+query_corrector_platform = QueryCorrector(api_key=gemini_api_key, query_correctorsystemprompt=querycorrector_prompt)
 
 app=FastAPI()
 
@@ -33,18 +63,25 @@ async def chat(request:ChatRequest):
     return ChatResponse(response=response_text)
 
 
-# Configuring system prompt in project 
 
-def load_system_prompt():
-    base_dir=os.path.dirname(os.path.abspath(__file__))
-    prompt_path=os.path.join(base_dir,"prompts","system_prompt.md")
-    with open(prompt_path,encoding="utf-8") as f:
-        return f.read()
+class QueryCorrectorRequest(BaseModel):
+    sql_query: str
 
-system_prompt=load_system_prompt()
 
-gemini_api_key = os.getenv("GEMINI_API_KEY")
+class QueryCorrectorResponse(BaseModel):
+    original_query: str
+    corrected_query: str
+    type: str  # syntax_fix | readability_improvement | semantic_correction | clarification_required
+    changes_made: List[str]
+    risk_level: str  # low | medium | high
+    confidence: Optional[float]
 
-gemini = Gemini(api_key=gemini_api_key, system_prompt=system_prompt)
 
-ai_platform=Gemini(api_key=gemini_api_key,system_prompt=system_prompt)
+@app.post("/correctquery", response_model=QueryCorrectorResponse)
+async def correct_query(request: QueryCorrectorRequest):
+    result =  query_corrector_platform.chat(request.sql_query)
+
+    if not isinstance(result, dict):
+        raise ValueError("QueryCorrector did not return a valid dict response")
+
+    return QueryCorrectorResponse(**result)
