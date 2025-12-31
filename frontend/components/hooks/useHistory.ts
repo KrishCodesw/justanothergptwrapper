@@ -4,17 +4,27 @@ import { useState, useEffect } from "react";
 
 export interface HistoryItem {
   id: string;
-  query: string;
-  sql: string|undefined;
-  schema: any;
-  processedData:any;
+  query: string;              // original input
+  sql?: string;               // corrected SQL (optional)
+  processedData?: {           // full processed data
+    original: string;
+    corrected: string;
+    type: string;
+    changes_made: string[];
+    risk_level: string;
+    confidence?: number;
+  };
+  schema?: any;               // optional schema info
   timestamp: number;
 }
+
 
 const STORAGE_KEY = "sql_history_sessions";
 
 export function useHistory() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [dbHistory, setDbHistory] = useState<HistoryItem[]>([]);
+
   const [isLoaded, setIsLoaded] = useState(false); // Prevents hydration mismatch
 
   // 1. LOAD: Run once when the component mounts (Client-side only)
@@ -33,20 +43,32 @@ export function useHistory() {
   }, []);
 
   // 2. SAVE: Helper to add item and persist
-  const addToHistory = (query: string, sql?: string|undefined, schema?: string,processedData?:any) => {
-    const newItem: HistoryItem = {
-      id: Date.now().toString(),
-      query,
-      sql,
-      processedData,
-      schema,
-      timestamp: Date.now(),
-    };
-
-    const updated = [newItem, ...history];
-    setHistory(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  const addToHistory = (
+  query: string,
+  sql?: string,
+  schema?: string,
+  processedData?: any,
+  toDb: boolean = false
+) => {
+  const newItem: HistoryItem = {
+    id: Date.now().toString(),
+    query,
+    sql,
+    schema,
+    processedData,
+    timestamp: Date.now(),
   };
+
+  if (toDb) {
+      const updatedDb = [newItem, ...dbHistory];
+      setDbHistory(updatedDb);
+    } else {
+      const updated = [newItem, ...history];
+      setHistory(updated);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    }
+};
+
 
   // 3. DELETE: Helper to remove item and persist
   const removeHistoryItem = (id: string) => {
@@ -64,6 +86,9 @@ export function useHistory() {
   return {
     history,
     addToHistory,
+     dbHistory,  
+
+     setDbHistory, 
     removeHistoryItem,
     clearHistory,
     setHistory,

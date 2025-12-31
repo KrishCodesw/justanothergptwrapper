@@ -20,7 +20,7 @@ export async function POST(req:Request){
                 sql:item.sql,
                 sourceSchema:item.schema??"unknown",
                 userId:userId,
-                createdAt:new Date(item.timestamp)
+                created_at:new Date(item.timestamp)
             }))
         })
     return NextResponse.json({ success: true, count: guestHistory.length }, { status: 200 });

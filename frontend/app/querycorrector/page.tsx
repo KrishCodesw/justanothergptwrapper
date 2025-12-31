@@ -43,8 +43,15 @@ export default function QueryCorrector({
   // Determine Pro status: True if passed as prop OR if user is logged in
   const isPro = initialIsPro || !!user;
 
-  const { history, addToHistory, removeHistoryItem, clearHistory, isLoaded } =
-    useHistory();
+  const {
+    history,
+    dbHistory,
+    setDbHistory,
+    addToHistory,
+    removeHistoryItem,
+    clearHistory,
+    isLoaded,
+  } = useHistory();
 
   // --- 2. STATE ---
   const [input, setInput] = useState("");
@@ -58,6 +65,7 @@ export default function QueryCorrector({
   } | null>(null);
 
   const [loading, setLoading] = useState(false);
+
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -66,6 +74,22 @@ export default function QueryCorrector({
   const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "done">(
     "idle"
   );
+  useEffect(() => {
+    const fetchDbHistory = async () => {
+      if (user && isLoaded) {
+        try {
+          const res = await fetch("/api/corrected_queries/get");
+          const data = await res.json();
+          // console.log("API DATA RECEIVED:", data);
+          // ✅ NEW: Save DB history in state
+          setDbHistory(data.reverse()); // latest first
+        } catch (err) {
+          console.error("Failed to fetch DB history", err);
+        }
+      }
+    };
+    fetchDbHistory();
+  }, [user, isLoaded]);
 
   // --- 3. SYNC LOGIC (Moves Guest History to Backend on Login) ---
   useEffect(() => {
@@ -143,7 +167,7 @@ export default function QueryCorrector({
 
       if (isPro) {
         try {
-          await fetch("/corrected_queries/save", {
+          await fetch("/api/corrected_queries/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -155,13 +179,25 @@ export default function QueryCorrector({
               changes_made: processedData.changes_made,
             }),
           });
-          addToHistory(input, processedData.corrected);
+          addToHistory(
+            input,
+            processedData.corrected,
+            undefined,
+            processedData
+          );
+
+          // addToHistory(input, processedData.corrected);
         } catch (saveError) {
           console.error("Failed to save query to DB", saveError);
         }
       } else {
         if (history.length < GUEST_LIMIT) {
-          addToHistory(input, processedData.corrected);
+          addToHistory(
+            input,
+            processedData.corrected,
+            undefined,
+            processedData
+          );
         } else {
           setShowLimitModal(true);
         }
@@ -184,6 +220,7 @@ export default function QueryCorrector({
       setLoading(false);
     }
   };
+  const mergedHistory = [...dbHistory, ...history];
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -217,7 +254,6 @@ export default function QueryCorrector({
       >
         <div className="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white">
           <div className="flex items-center gap-2 font-bold text-slate-800">
-            <LayoutDashboard className="w-5 h-5 text-indigo-600" />
             <span>SQL Corrector</span>
           </div>
           <button
@@ -248,20 +284,20 @@ export default function QueryCorrector({
             </div>
 
             <div className="space-y-1">
-              {history.length === 0 && (
+              {mergedHistory.length === 0 && (
                 <div className="px-3 py-4 text-center text-sm text-slate-400 italic">
                   No queries yet.
                 </div>
               )}
-              {history.map((item: any) => (
+              {mergedHistory.map((item: any) => (
                 <div
                   key={item.id}
-                  onClick={() => setInput(item.query)}
+                  onClick={() => setInput(item.original_query)}
                   className="group flex flex-col p-3 rounded-lg border border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm cursor-pointer transition-all"
                 >
                   <div className="flex justify-between items-start w-full">
                     <p className="truncate text-sm font-medium text-slate-700 w-11/12">
-                      {item.query}
+                      {item.original_query}
                     </p>
                     <button
                       onClick={(e) => {
