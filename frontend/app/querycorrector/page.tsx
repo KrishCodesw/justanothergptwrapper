@@ -9,7 +9,10 @@ import {
   Copy,
   Check,
   Loader2,
+  PanelLeftClose,
+  PanelLeft,
   X,
+  HomeIcon,
   Plus,
   History,
   ArrowRight,
@@ -246,10 +249,13 @@ export default function QueryCorrector({
       {/* --- SIDEBAR --- */}
       <aside
         className={cn(
-          "bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out z-20",
+          // 1. FIXED on mobile (floats on top), RELATIVE on desktop (sits next to content)
+          "fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 ease-in-out lg:relative lg:z-auto",
+
+          // 2. Control visibility
           sidebarOpen
-            ? "w-80 translate-x-0"
-            : "w-0 -translate-x-full opacity-0 lg:w-0 lg:opacity-100 lg:translate-x-0 overflow-hidden"
+            ? "translate-x-0 shadow-2xl lg:shadow-none w-80" // Mobile: Shadow added
+            : "-translate-x-full lg:translate-x-0 lg:w-0 lg:overflow-hidden"
         )}
       >
         <div className="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white">
@@ -261,6 +267,13 @@ export default function QueryCorrector({
             className="lg:hidden text-slate-400 hover:text-slate-600"
           >
             <X className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="hidden lg:block text-slate-400 hover:text-slate-600 transition-colors"
+            title="Collapse Sidebar"
+          >
+            <PanelLeftClose className="w-5 h-5" />
           </button>
         </div>
 
@@ -284,7 +297,7 @@ export default function QueryCorrector({
             </div>
 
             <div className="space-y-1">
-              {mergedHistory.length === 0 && (
+              {History.length === 0 && (
                 <div className="px-3 py-4 text-center text-sm text-slate-400 italic">
                   No queries yet.
                 </div>
@@ -292,7 +305,18 @@ export default function QueryCorrector({
               {mergedHistory.map((item: any) => (
                 <div
                   key={item.id}
-                  onClick={() => setInput(item.original_query)}
+                  onClick={() => {
+                    setInput(item.original_query);
+                    setOutput({
+                      original: item.original_query,
+                      corrected: item.corrected_query,
+                      type: item.type || "Unknown",
+                      changes_made: item.changes_made || [],
+                      risk_level: item.risk_level || "low",
+                      confidence: item.confidence || 0,
+                    });
+                    if (window.innerWidth < 1024) setSidebarOpen(false);
+                  }}
                   className="group flex flex-col p-3 rounded-lg border border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm cursor-pointer transition-all"
                 >
                   <div className="flex justify-between items-start w-full">
@@ -318,6 +342,13 @@ export default function QueryCorrector({
           </div>
         </div>
       </aside>
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/40 backdrop-blur-xs z-20 lg:hidden"
+          aria-hidden="true"
+        />
+      )}
 
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 flex flex-col h-full relative overflow-hidden">
@@ -327,12 +358,12 @@ export default function QueryCorrector({
             {!sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
+                className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
+                title="Open Sidebar"
               >
-                <Menu className="w-5 h-5" />
+                <PanelLeft className="w-5 h-5" />
               </button>
             )}
-            {/* Optional Title if Sidebar is closed, or Breadcrumbs */}
           </div>
 
           <div className="flex items-center gap-3">
@@ -340,6 +371,12 @@ export default function QueryCorrector({
               // LOGGED IN STATE
               <>
                 <div className="flex items-center gap-2 text-sm text-slate-700 px-3 py-1.5 bg-slate-100 rounded-full border border-slate-200">
+                  <Link
+                    href="/"
+                    className="text-sm flex gap-2 items-center font-medium   text-black px-1 py-2 rounded-full  transition-colors"
+                  >
+                    <HomeIcon className="w-4 h-4" /> Home
+                  </Link>
                   <User className="w-4 h-4 text-slate-500" />
                   <span className="font-medium max-w-[100px] truncate">
                     {user.full_name || "User"}
@@ -371,7 +408,7 @@ export default function QueryCorrector({
         </header>
 
         {/* Scrollable Workspace */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 w-full min-w-0">
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Input Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -480,10 +517,18 @@ export default function QueryCorrector({
                         style={vscDarkPlus}
                         customStyle={{
                           margin: 0,
-                          padding: "1.5rem",
+                          padding: "1rem",
                           background: "transparent",
-                          fontSize: "0.85rem",
+                          fontSize: "0.8rem",
                           lineHeight: "1.5",
+                          wordBreak: "break-word", // Break long words if needed
+                          whiteSpace: "pre-wrap", // Wrap text naturally
+                        }}
+                        codeTagProps={{
+                          style: {
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                          },
                         }}
                         wrapLines={true}
                       >
@@ -523,6 +568,14 @@ export default function QueryCorrector({
                           background: "transparent",
                           fontSize: "0.85rem",
                           lineHeight: "1.5",
+                          wordBreak: "break-word", // Break long words if needed
+                          whiteSpace: "pre-wrap", // Wrap text naturally
+                        }}
+                        codeTagProps={{
+                          style: {
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                          },
                         }}
                         wrapLines={true}
                       >
