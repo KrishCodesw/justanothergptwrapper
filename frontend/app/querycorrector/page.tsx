@@ -498,7 +498,7 @@ export default function QueryCorrector({
                       Before
                     </span>
                     <div className="relative rounded-xl overflow-hidden bg-[#1e1e1e] shadow-lg border border-slate-800 ring-1 ring-white/10 group">
-                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-3 right-3 opacity-70 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() =>
                             copyToClipboard(output.original, "original")
@@ -543,8 +543,8 @@ export default function QueryCorrector({
                       After <ArrowRight className="w-3 h-3" />
                     </span>
                     <div className="relative rounded-xl overflow-hidden bg-[#1e1e1e] shadow-lg shadow-indigo-500/10 border border-indigo-500/30 group">
-                      <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-indigo-500 to-purple-500 opacity-50"></div>
-                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-indigo-500  opacity-50"></div>
+                      <div className="absolute top-3 right-3 opacity-100 group-hover:opacity-100 transition-opacity z-10">
                         <button
                           onClick={() =>
                             copyToClipboard(output.corrected, "corrected")
@@ -552,11 +552,11 @@ export default function QueryCorrector({
                           className="flex items-center gap-1.5 px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-medium transition-colors shadow-lg"
                         >
                           {copiedKey === "corrected" ? (
-                            <Check className="w-3 h-3" />
+                            <Check className="w-3.5 h-3.5" />
                           ) : (
-                            <Copy className="w-3 h-3" />
+                            <Copy className="w-3.5 h-3.5" />
                           )}
-                          {copiedKey === "corrected" ? "Copied" : "Copy Fix"}
+                          {copiedKey === "corrected" ? "Copied" : ""}
                         </button>
                       </div>
                       <SyntaxHighlighter
