@@ -184,6 +184,7 @@ export default function QueryCorrector({
           });
           addToHistory(
             input,
+            "CORRECT",
             processedData.corrected,
             undefined,
             processedData
@@ -197,6 +198,7 @@ export default function QueryCorrector({
         if (history.length < GUEST_LIMIT) {
           addToHistory(
             input,
+            "CORRECT",
             processedData.corrected,
             undefined,
             processedData

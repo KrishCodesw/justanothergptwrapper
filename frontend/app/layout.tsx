@@ -37,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${lato.className}  `}>
+      <body className={`${manrope.className}  `}>
         <AuthInitializer />
         <div className="flex justify-center">{/* <Navbar /> */}</div>
         {children}

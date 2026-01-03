@@ -114,7 +114,7 @@ export default function HeroSection({ isPro }: { isPro?: boolean }) {
           });
 
           // Update UI immediately (Optimistic update)
-          addToHistory(input, data.response, schema);
+          addToHistory(input, "GENERATE", data.response, schema);
         } catch (saveError) {
           console.error("Failed to save query to DB", saveError);
         }
@@ -220,28 +220,30 @@ export default function HeroSection({ isPro }: { isPro?: boolean }) {
             </div>
           ) : (
             <div className="space-y-1">
-              {history.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => loadSession(item)}
-                  className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors border border-transparent hover:border-gray-200"
-                >
-                  <div className="overflow-hidden">
-                    <p className="text-sm font-medium text-gray-700 truncate">
-                      {item.query}
-                    </p>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeHistoryItem(item.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity p-1.5 hover:bg-red-50 rounded"
+              {history
+                .filter((item) => item.type === "GENERATE" || !item.type)
+                .map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => loadSession(item)}
+                    className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors border border-transparent hover:border-gray-200"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-medium text-gray-700 truncate">
+                        {item.query}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeHistoryItem(item.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity p-1.5 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
             </div>
           )}
 

@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 export interface HistoryItem {
   id: string;
   query: string;              // original input
-  sql?: string;               // corrected SQL (optional)
+  sql?: string;   
+  type: "GENERATE" | "CORRECT";            // corrected SQL (optional)
   processedData?: {           // full processed data
     original: string;
     corrected: string;
@@ -24,7 +25,6 @@ const STORAGE_KEY = "sql_history_sessions";
 export function useHistory() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [dbHistory, setDbHistory] = useState<HistoryItem[]>([]);
-
   const [isLoaded, setIsLoaded] = useState(false); // Prevents hydration mismatch
 
   // 1. LOAD: Run once when the component mounts (Client-side only)
@@ -45,6 +45,7 @@ export function useHistory() {
   // 2. SAVE: Helper to add item and persist
   const addToHistory = (
   query: string,
+  type: "GENERATE" | "CORRECT",
   sql?: string,
   schema?: string,
   processedData?: any,
@@ -53,6 +54,7 @@ export function useHistory() {
   const newItem: HistoryItem = {
     id: Date.now().toString(),
     query,
+    type,
     sql,
     schema,
     processedData,
@@ -86,12 +88,11 @@ export function useHistory() {
   return {
     history,
     addToHistory,
-     dbHistory,  
-
-     setDbHistory, 
+    dbHistory,
+    setDbHistory,
     removeHistoryItem,
     clearHistory,
     setHistory,
-    isLoaded // Use this to show a skeleton loader if needed
+    isLoaded,
   };
 }
