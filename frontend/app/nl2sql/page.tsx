@@ -62,9 +62,7 @@ export default function HomePage() {
       {/* HEADER: Changes based on Auth State */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-white bg-white z-20 ">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-2xl text-gray-800">
-            {user ? "GetSQL" : "GetSQL"}
-          </span>
+          <span className="font-semibold text-2xl text-gray-800">GETSQL</span>
         </div>
 
         <div className="flex items-center gap-4">

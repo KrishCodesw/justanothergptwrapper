@@ -297,7 +297,7 @@ export default function HeroSection({ isPro }: { isPro?: boolean }) {
                       setOutput("");
                       setSidebarOpen(false);
                     }}
-                    className="w-full flex items-center justify-center gap-2 bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-all"
+                    className="w-full flex items-center justify-center gap-2 bg-black text-white py-2.5 rounded-2xl font-medium hover:bg-gray-800 transition-all"
                   >
                     <Plus className="w-4 h-4" />
                     New Query
