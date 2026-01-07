@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Manrope, Lato } from "next/font/google";
+import { Geist, Geist_Mono, Manrope, Lato, Inter } from "next/font/google";
 import "./globals.css";
 
 import { AuthInitializer } from "@/components/AuthInitializer";
@@ -24,6 +24,10 @@ const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
 });
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "GetSQL",
@@ -37,7 +41,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${manrope.className}  `}>
+      <body className={`${lato.className}  `}>
         <AuthInitializer />
         <div className="flex justify-center">{/* <Navbar /> */}</div>
         {children}

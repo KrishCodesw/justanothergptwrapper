@@ -69,8 +69,8 @@ const LandingPage = () => {
             <div
               key={index}
               className={`
-                group relative p-8 rounded-lg border transition-all duration-300
-                ${"bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300"}
+                group relative p-8 rounded-lg  border transition-all duration-300 hover:shadow-xl hover:-translate-y-1  hover:border-black hover:scale-[1.01]
+                ${"bg-white border-slate-200 shadow-sm "} 
               `}
             >
               <a href={tool.link}>

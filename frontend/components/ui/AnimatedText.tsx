@@ -30,7 +30,7 @@ export default function AutoTypingText() {
       () => {
         setSubIndex((prev) => prev + (reverse ? -1 : 1));
       },
-      reverse ? 20 : 65
+      reverse ? 40 : 40
     ); // Speed: erasing is usually faster than typing
 
     return () => clearTimeout(timeout);
