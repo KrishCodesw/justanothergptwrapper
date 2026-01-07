@@ -365,26 +365,26 @@ export default function HeroSection({ isPro }: { isPro?: boolean }) {
         <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
           <div className="w-full max-w-4xl h-fit bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
             {/* Tab header */}
-            <div className="flex border-b border-gray-100 bg-gray-50/50">
+            <div className="flex p-1 bg-slate-100 rounded-full w-fit mx-auto mb-6">
               <button
                 onClick={() => setActiveTab("query")}
-                className={`flex-1 py-4 text-sm font-semibold flex items-center justify-center gap-2 ${
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                   activeTab === "query"
-                    ? "bg-white border-b-2 border-black text-black"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-white text-indigo-600 shadow-sm" // Active State: Pop out
+                    : "text-slate-500 hover:text-slate-700" // Inactive State: Blend in
                 }`}
               >
-                <MessageCircle className="w-4 h-4" /> Query
+                Query
               </button>
               <button
                 onClick={() => setActiveTab("schema")}
-                className={`flex-1 py-4 text-sm font-semibold flex items-center justify-center gap-2 ${
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                   activeTab === "schema"
-                    ? "bg-white border-b-2 border-black text-black"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-white text-indigo-600 shadow-sm" // Active State: Pop out
+                    : "text-slate-500 hover:text-slate-700" // Inactive State: Blend in
                 }`}
               >
-                <Database className="w-4 h-4" /> Schema Setup
+                Schema
               </button>
             </div>
 
