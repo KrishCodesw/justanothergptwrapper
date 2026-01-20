@@ -36,7 +36,7 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-black bg-linear-to-t  from-amber-50 via-amber-100 amber-200 amber-400 to-amber-700   selection:bg-green-300">
+    <div className="min-h-screen bg-white text-black bg-linear-to-t  from-amber-50 via-amber-100 amber-200 amber-400 to-amber-800   selection:bg-green-300">
       {/* Navbar */}
       <nav className="max-w-7xl mx-auto px-6 py-8  flex justify-center items-center">
         <div className="text-5xl font-light tracking-tight">
@@ -54,22 +54,10 @@ const LandingPage = () => {
                 From intent to execution.
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mb-8 max-w-lg">
+            <p className="text-lg sm:text-xl text-black/80 font-medium leading-relaxed mb-8 max-w-lg">
               Generate, fix, explain, and optimize SQL using plain English and
               your schema.
             </p>
-            <div className="mt-8 flex gap-4">
-              <a
-                href="/nl2sql"
-                className="px-6 py-3 rounded-lg bg-black text-white text-sm font-medium hover:opacity-90 transition"
-              >
-                Try with a query
-              </a>
-
-              <span className="text-sm text-black/50 self-center">
-                No signup required
-              </span>
-            </div>
           </div>
 
           <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
@@ -86,17 +74,16 @@ const LandingPage = () => {
           {tools.map((tool, index) => (
             <div
               key={index}
-              className="
-    group relative p-8 rounded-xl
-    bg-white/20
-    backdrop-blur-2xl
-    border border-white/30
-    shadow-lg
-    transition-all duration-300
-    hover:shadow-2xl
-    hover:-translate-y-1
-    hover:scale-[1.02]
-  "
+              className={`
+  group relative p-8 rounded-xl
+  ${tool.primary ? "bg-white/40 border-white/60" : "bg-white/20 border-white/30"}
+  backdrop-blur-2xl
+  border
+  shadow-lg
+  transition-all duration-300
+  hover:shadow-2xl
+  hover:-translate-y-1
+`}
             >
               <a href={tool.link}>
                 <h3 className="group transition-all duration-500 ease-in-out text-2xl font-semibold mb-3 tracking-normal hover:tracking-widest group-hover:text-blue-600 flex items-center gap-2">
@@ -115,7 +102,7 @@ const LandingPage = () => {
                 </h3>
               </a>
 
-              <p className="text-black hover:tracking-wider transition-all ease-in-out duration-500 font-bold h-12">
+              <p className="text-black  transition-all ease-in-out duration-500 font-bold h-12">
                 {tool.description}
               </p>
             </div>
