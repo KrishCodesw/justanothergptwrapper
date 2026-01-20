@@ -9,84 +9,93 @@ import {
   Copy,
   Check,
   ArrowRight,
-  Loader2,
-  Database,
-  MessageCircle,
-  Trash2,
-  Plus,
+  Sparkles,
+  Zap,
+  LayoutTemplate,
   History,
   Lock,
+  ChevronRight,
+  ChevronDown,
+  Loader2,
   X,
-  /* hamburger */
+  Database,
+  Terminal,
+  Trash2,
 } from "lucide-react";
 
 const GUEST_LIMIT = 2;
 
-export default function HeroSection({ isPro }: { isPro?: boolean }) {
-  // CHANGE 1: We destructure `setHistory` here
-  const { history, addToHistory, removeHistoryItem, isLoaded, setHistory } =
-    useHistory();
+// --- Helper Components ---
+const Tooltip = ({
+  children,
+  text,
+}: {
+  children: React.ReactNode;
+  text: string;
+}) => (
+  <div className="group relative flex items-center justify-center">
+    {children}
+    <span className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-lg">
+      {text}
+    </span>
+  </div>
+);
 
-  const [activeTab, setActiveTab] = useState("query");
+export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
+  const { history, addToHistory, removeHistoryItem, setHistory } = useHistory();
+
+  // Core State
   const [input, setInput] = useState("");
   const [schema, setSchema] = useState("");
-  const [output, setOutput] = useState("");
+  const [output, setOutput] = useState(""); // SQL Output
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // UI State
+  const [isSchemaOpen, setIsSchemaOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false); // Default closed for cleaner start
   const [showLimitModal, setShowLimitModal] = useState(false);
 
-  // Responsive: mobile drawer state
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  // --- Load Logic ---
   useEffect(() => {
     const savedSchema = localStorage.getItem("sql_active_schema");
-    if (savedSchema) setSchema(savedSchema);
-  }, []);
+    if (savedSchema) {
+      setSchema(savedSchema);
+      setIsSchemaOpen(true);
+    }
 
-  // CHANGE 2: Fix the Fetch Logic (Mapping DB fields to UI fields)
-  useEffect(() => {
     if (isPro) {
-      console.log("Fetching DB History...");
       fetch("/api/queries/get")
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to fetch history");
-          return res.json(); // <--- Fixed syntax error here
-        })
+        .then((res) => (res.ok ? res.json() : []))
         .then((data) => {
-          console.log("Loaded DB History:", data);
-
-          // Map backend fields to frontend format
-          // Backend: { id, prompt, sourceSchema, sql, createdAt }
-          // Frontend: { id, query, schema, sql, timestamp }
-          const formattedHistory = data.map((item: any) => ({
-            id: item.id,
-            query: item.prompt,
-            sql: item.sql,
-            schema: item.sourceSchema,
-            timestamp: new Date(item.createdAt).getTime(),
-          }));
-
-          setHistory(formattedHistory);
+          setHistory(
+            data.map((item: any) => ({
+              id: item.id,
+              query: item.prompt,
+              sql: item.sql,
+              schema: item.sourceSchema,
+              timestamp: new Date(item.createdAt).getTime(),
+            })),
+          );
         })
-        .catch((err) => console.error(err));
+        .catch(console.error);
     }
   }, [isPro, setHistory]);
 
+  // --- Handlers ---
   const handleGenerate = async () => {
     if (!input.trim()) return;
 
     if (!schema.trim()) {
-      alert("Please provide the Database Schema first.");
-      setActiveTab("schema");
+      setIsSchemaOpen(true); // Open drawer to nudge user
       return;
     }
 
     setLoading(true);
-    setTimeout(() => setLoading(false), 3000);
     localStorage.setItem("sql_active_schema", schema);
-    setOutput("");
+    setOutput(""); // Reset output for animation effect
 
-    const combinedPrompt = `\n### DATABASE SCHEMA:\n${schema}\n\n### QUESTION:\n${input}\n    `;
+    const combinedPrompt = `\n### SCHEMA:\n${schema}\n\n### REQUEST:\n${input}\n`;
 
     try {
       const response = await fetch("http://localhost:8000/chat", {
@@ -95,43 +104,29 @@ export default function HeroSection({ isPro }: { isPro?: boolean }) {
         body: JSON.stringify({ prompt: combinedPrompt }),
       });
 
-      if (!response.ok) throw new Error("Failed to generate SQL");
-
+      if (!response.ok) throw new Error("Generation failed");
       const data = await response.json();
 
-      // --- 3. SAVE LOGIC ---
       if (isPro) {
-        // --- PATH A: PRO USER (Save to DB) ---
-        try {
-          await fetch("/api/queries/save", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              prompt: input,
-              sql: data.response,
-              schema: schema,
-            }),
-          });
-
-          // Update UI immediately (Optimistic update)
-          addToHistory(input, "GENERATE", data.response, schema);
-        } catch (saveError) {
-          console.error("Failed to save query to DB", saveError);
-        }
+        // Save Pro
+        fetch("/api/queries/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: input, sql: data.response, schema }),
+        }).catch(console.error);
+        addToHistory(input, "GENERATE", data.response, schema);
       } else {
-        // --- PATH B: GUEST USER (Local Storage + Limits) ---
+        // Guest Limit
         if (history.length < GUEST_LIMIT) {
           addToHistory(input, data.response, schema);
         } else {
           setShowLimitModal(true);
         }
       }
-      // ---------------------
 
       setOutput(data.response);
     } catch (error) {
-      console.error(error);
-      setOutput("Error: Could not connect to backend.");
+      setOutput("-- Error: Ensure backend is running.");
     } finally {
       setLoading(false);
     }
@@ -140,414 +135,363 @@ export default function HeroSection({ isPro }: { isPro?: boolean }) {
   const loadSession = (item: any) => {
     setInput(item.query);
     setOutput(item.sql);
-    setSchema(item.schema);
-    setActiveTab("query");
-    // if we're on mobile, close the drawer to show content
-    setSidebarOpen(false);
+    setSchema(item.schema || "");
+    setIsSchemaOpen(!!item.schema);
   };
 
-  const copyToClipboard = () => {
+  const copyCode = () => {
     navigator.clipboard.writeText(output);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleRedirectToLogin = () => {
-    window.location.href = "/auth/signin";
-  };
-
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-white font-sans text-black overflow-hidden relative">
-      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white z-20">
-        <div className="flex items-center gap-3">
-          <button
-            aria-label="Open sidebar"
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-md bg-gray-100"
-          >
-            {/* simple hamburger icon built with spans to avoid adding another dependency */}
-            <div className="w-5">
-              <span className="block h-0.5 bg-black rounded my-0.5" />
-              <span className="block h-0.5 bg-black rounded my-0.5" />
-              <span className="block h-0.5 bg-black rounded my-0.5" />
-            </div>
-          </button>
-        </div>
-        <div className="text-xs text-gray-500">{isPro ? "Pro" : "Guest"}</div>
-      </div>
-
-      {/* --- SIDEBAR (desktop) --- */}
-      <aside className="hidden md:flex w-80 bg-white border-r flex-col z-10 shrink-0">
-        <div className="p-4">
-          <button
-            onClick={() => {
-              setInput("");
-              setOutput("");
-            }}
-            className="p-3 flex items-center justify-center gap-2 bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            New Query
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-3 min-h-0">
-          <div className="flex items-center justify-between px-2 mb-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
-              <History className="w-3 h-3" />
-              {isPro ? "History" : "Guest History"}
-            </div>
-
-            {/* Hide counter if Pro */}
-            {!isPro && (
-              <div
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  history.length >= GUEST_LIMIT
-                    ? "bg-red-100 text-red-600"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {history.length} / {GUEST_LIMIT} Free
-              </div>
-            )}
+    <div className="flex h-screen w-full bg-[#f8f9fc] text-slate-900 font-sans overflow-hidden selection:bg-indigo-100 selection:text-indigo-900 relative">
+      {/* ================= 1. LEFT DOCK (Navigation) ================= */}
+      <nav className="hidden md:flex flex-col items-center py-6 w-18 bg-white border-r border-slate-100 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0">
+        <div className="mb-8">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+            <LayoutTemplate className="w-5 h-5 text-white" />
           </div>
-
-          {!isLoaded ? (
-            <div className="text-sm text-gray-400 px-2">Loading...</div>
-          ) : history.length === 0 ? (
-            <div className="text-sm text-gray-400 px-2 italic">
-              No queries yet.
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {history
-                .filter((item) => item.type === "GENERATE" || !item.type)
-                .map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => loadSession(item)}
-                    className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors border border-transparent hover:border-gray-200"
-                  >
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-gray-700 truncate">
-                        {item.query}
-                      </p>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeHistoryItem(item.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity p-1.5 hover:bg-red-50 rounded"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-            </div>
-          )}
-
-          {/* Only show Limit Banner if NOT Pro */}
-          {!isPro && history.length >= GUEST_LIMIT && (
-            <div className="mt-4 mx-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
-              <Lock className="w-4 h-4 text-gray-400 mx-auto mb-2" />
-              <p className="text-xs text-gray-500 mb-2">Guest limit reached.</p>
-              <button
-                onClick={handleRedirectToLogin}
-                className="text-xs font-bold text-blue-600 hover:underline"
-              >
-                Sign in to save more
-              </button>
-            </div>
-          )}
         </div>
-      </aside>
 
-      {/* --- SIDEBAR (mobile drawer) --- */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSidebarOpen(false)}
-              className="fixed inset-0 bg-black/40 z-40 md:hidden"
-            />
-
-            <motion.aside
-              initial={{ x: -260 }}
-              animate={{ x: 0 }}
-              exit={{ x: -260 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed left-0 top-0 bottom-0 w-80 bg-white border-r border-gray-200 z-50 md:hidden overflow-y-auto"
+        <div className="flex flex-col gap-4 w-full px-3">
+          <Tooltip text="History">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className={`p-3 rounded-xl transition-all duration-300 w-full flex justify-center ${
+                showHistory
+                  ? "bg-slate-100 text-slate-900"
+                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+              }`}
             >
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                <div className="text-sm font-semibold">History</div>
-                <button onClick={() => setSidebarOpen(false)} className="p-2">
-                  <X className="w-4 h-4 text-gray-600" />
-                </button>
-              </div>
+              <History className="w-5 h-5" />
+            </button>
+          </Tooltip>
 
-              <div className="p-3">
-                <div className="mb-3">
-                  <button
-                    onClick={() => {
-                      setInput("");
-                      setOutput("");
-                      setSidebarOpen(false);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 bg-black text-white py-2.5 rounded-2xl font-medium hover:bg-gray-800 transition-all"
-                  >
-                    <Plus className="w-4 h-4" />
-                    New Query
-                  </button>
-                </div>
+          <Tooltip text="New Query">
+            <button
+              onClick={() => {
+                setInput("");
+                setOutput("");
+              }}
+              className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-300 w-full flex justify-center"
+            >
+              <Zap className="w-5 h-5" />
+            </button>
+          </Tooltip>
+        </div>
+      </nav>
 
-                {!isLoaded ? (
-                  <div className="text-sm text-gray-400 px-2">Loading...</div>
-                ) : history.length === 0 ? (
-                  <div className="text-sm text-gray-400 px-2 italic">
-                    No queries yet.
+      {/* ================= 2. HISTORY DRAWER ================= */}
+      <AnimatePresence>
+        {showHistory && (
+          <motion.aside
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 300, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            className="
+  hidden
+  md:flex md:flex-col
+  h-full
+  shrink-0
+  bg-white
+  border-r border-slate-100
+  z-20
+  overflow-y-auto overflow-x-hidden
+"
+          >
+            <div className="p-5 flex-1 overflow-y-auto">
+              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pl-1">
+                Recent Queries
+              </h2>
+              <div className="space-y-2">
+                {history.length === 0 ? (
+                  <div className="text-sm text-slate-400 italic pl-1">
+                    No history found.
                   </div>
                 ) : (
-                  <div className="space-y-1">
-                    {history.map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => loadSession(item)}
-                        className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors border border-transparent hover:border-gray-200"
-                      >
-                        <div className="overflow-hidden">
-                          <p className="text-sm font-medium text-gray-700 truncate">
-                            {item.query}
-                          </p>
-                          <p className="text-[10px] text-gray-400 mt-0.5 truncate">
-                            {new Date(item.timestamp).toLocaleTimeString()}
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeHistoryItem(item.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity p-1.5 hover:bg-red-50 rounded"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {!isPro && history.length >= GUEST_LIMIT && (
-                  <div className="mt-4 mx-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                    <Lock className="w-4 h-4 text-gray-400 mx-auto mb-2" />
-                    <p className="text-xs text-gray-500 mb-2">
-                      Guest limit reached.
-                    </p>
-                    <button
-                      onClick={handleRedirectToLogin}
-                      className="text-xs font-bold text-blue-600 hover:underline"
+                  history.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      onClick={() => loadSession(item)}
+                      className="group relative p-3 rounded-xl bg-slate-50 border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm cursor-pointer transition-all duration-200"
                     >
-                      Sign in to save more
-                    </button>
-                  </div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            item.sql ? "bg-emerald-400" : "bg-orange-300"
+                          }`}
+                        />
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {new Date(item.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-slate-700 truncate">
+                        {item.query}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeHistoryItem(item.id);
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-md transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </motion.div>
+                  ))
                 )}
               </div>
-            </motion.aside>
-          </>
+            </div>
+
+            {!isPro && (
+              <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+                <div className="flex justify-between text-xs font-medium text-slate-500 mb-2">
+                  <span>Guest Usage</span>
+                  <span>
+                    {history.length}/{GUEST_LIMIT}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${history.length >= GUEST_LIMIT ? "bg-red-500" : "bg-indigo-500"}`}
+                    style={{
+                      width: `${Math.min((history.length / GUEST_LIMIT) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </motion.aside>
         )}
       </AnimatePresence>
 
-      {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
-          <div className="w-full max-w-4xl h-fit bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-            {/* Tab header */}
-            <div className="flex p-1 bg-slate-100 rounded-full w-fit mx-auto mb-6">
-              <button
-                onClick={() => setActiveTab("query")}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  activeTab === "query"
-                    ? "bg-white text-indigo-600 shadow-sm" // Active State: Pop out
-                    : "text-slate-500 hover:text-slate-700" // Inactive State: Blend in
-                }`}
+      {/* ================= 3. WORKSPACE (Split Pane) ================= */}
+      <main className="flex-1 flex flex-col md:flex-row relative z-10 overflow-hidden">
+        {/* --- LEFT: INPUT PANE --- */}
+        {/* min-w-0 is CRITICAL for flex items to shrink properly when the right pane expands */}
+        <div className="flex-1 flex flex-col min-w-0 bg-[#f8f9fc] relative">
+          <div className="flex-1 overflow-y-auto px-4 md:px-0">
+            <div className="max-w-3xl mx-auto w-full py-8 md:py-12">
+              {/* Header */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8 px-2"
               >
-                Query
-              </button>
-              <button
-                onClick={() => setActiveTab("schema")}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  activeTab === "schema"
-                    ? "bg-white text-indigo-600 shadow-sm" // Active State: Pop out
-                    : "text-slate-500 hover:text-slate-700" // Inactive State: Blend in
-                }`}
-              >
-                Schema
-              </button>
-            </div>
+                <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+                  Ask your database
+                </h1>
+                <p className="text-slate-500 text-sm mt-1">
+                  Transform natural language into optimized SQL
+                </p>
+              </motion.div>
 
-            <div className="p-6">
-              {/* Schema Tab */}
-              {activeTab === "schema" && (
-                <div className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                    <p className="text-sm text-blue-800">
-                      <strong>Instructions:</strong> Paste your schema here.
-                    </p>
-                  </div>
-                  <textarea
-                    value={schema}
-                    onChange={(e) => setSchema(e.target.value)}
-                    placeholder="CREATE TABLE users..."
-                    className="w-full h-56 md:h-64 p-4 rounded-lg border border-gray-300 font-mono text-xs focus:ring-2 focus:ring-black outline-none resize-none"
-                  />
-                </div>
-              )}
-
-              {/* Query Tab */}
-              {activeTab === "query" && (
-                <div className="space-y-6">
+              {/* The "Card" */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+                {/* Prompt Input */}
+                <div className="p-6">
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="e.g. Find all users..."
-                    className="w-full h-28 md:h-32 p-4 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black outline-none resize-none text-base"
+                    placeholder="e.g. Find users who signed up in the last 7 days and ordered more than twice..."
+                    className="w-full h-32 md:h-40 resize-none outline-none text-lg text-slate-700 placeholder:text-slate-300 bg-transparent font-medium leading-relaxed"
+                    spellCheck={false}
                   />
-                  <div className="flex flex-col md:flex-row items-center md:justify-end gap-3">
-                    <div className="w-full md:w-auto flex justify-between md:justify-end gap-3">
-                      <button
-                        onClick={handleGenerate}
-                        disabled={loading || !input}
-                        className="flex items-center gap-2 bg-black text-white px-6 py-2.5 rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />{" "}
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            Generate SQL <ArrowRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                </div>
 
-                  {/* Output */}
+                {/* Schema Toggle */}
+                <div className="border-t border-slate-50">
+                  <button
+                    onClick={() => setIsSchemaOpen(!isSchemaOpen)}
+                    className="w-full flex items-center gap-2 px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider hover:bg-slate-50 transition-colors"
+                  >
+                    {isSchemaOpen ? (
+                      <ChevronDown className="w-3 h-3" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3" />
+                    )}
+                    Context: Schema
+                    {!schema && (
+                      <span className="ml-auto text-[10px] text-indigo-400 normal-case flex items-center gap-1">
+                        Required
+                      </span>
+                    )}
+                  </button>
+
                   <AnimatePresence>
-                    {output && (
+                    {isSchemaOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="w-full mt-4"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden bg-slate-50/50"
                       >
-                        <div className="relative rounded-xl overflow-hidden bg-[#1e1e1e] border border-gray-800 shadow-2xl">
-                          <div className="flex items-center justify-between px-4 py-3 bg-[#252526] border-b border-gray-800">
-                            <div className="flex gap-2">
-                              <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                              <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                              <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                        <div className="p-6 pt-2">
+                          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2 text-xs text-slate-400 font-mono">
+                              <Database className="w-3 h-3" /> schema.sql
                             </div>
-                            <div className="text-xs font-mono text-gray-400 flex items-center gap-2">
-                              <Database className="w-3 h-3" />
-                              <span>generated_query.sql</span>
-                            </div>
-                            <button
-                              onClick={copyToClipboard}
-                              className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-md ${
-                                copied
-                                  ? "bg-green-500/10 text-green-400"
-                                  : "bg-gray-800 text-gray-300"
-                              }`}
-                            >
-                              {copied ? (
-                                <Check className="w-3.5 h-3.5" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5" />
-                              )}
-                              {copied ? "Copied" : "Copy"}
-                            </button>
+                            <textarea
+                              value={schema}
+                              onChange={(e) => setSchema(e.target.value)}
+                              placeholder="CREATE TABLE users (id INT, name TEXT...);"
+                              className="w-full h-32 bg-transparent resize-none outline-none text-xs font-mono text-slate-600 leading-normal"
+                            />
                           </div>
-                          <SyntaxHighlighter
-                            language="sql"
-                            style={vscDarkPlus}
-                            customStyle={{
-                              margin: 0,
-                              padding: "1.5rem",
-                              background: "transparent",
-                              fontSize: "0.9rem",
-                            }}
-                            showLineNumbers={true}
-                            wrapLines={true}
-                          >
-                            {output}
-                          </SyntaxHighlighter>
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
-              )}
+
+                {/* Footer Actions */}
+                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                  <button
+                    onClick={handleGenerate}
+                    disabled={loading || !input}
+                    className="ml-auto flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        Generate <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* --- RIGHT: OUTPUT PANE (Fixed Overflow Issue) --- */}
+        <AnimatePresence>
+          {output && (
+            <motion.div
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="absolute inset-0 md:static md:w-[45%] md:min-w-[400px] bg-[#1e1e1e] flex flex-col border-l border-slate-800 shadow-2xl z-40"
+            >
+              {/* Toolbar */}
+              <div className="h-14 shrink-0 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-[#1e1e1e]">
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
+                  </div>
+                  <span className="text-xs font-mono text-slate-500 ml-2">
+                    result.sql
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={copyCode}
+                    className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                  >
+                    {copied ? (
+                      <Check className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                  {/* Close Button for User Control */}
+                  <button
+                    onClick={() => setOutput("")}
+                    className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Editor Surface - Correctly Scrollable */}
+              <div className="flex-1 relative overflow-hidden">
+                <div className="absolute inset-0 overflow-auto custom-scrollbar p-6">
+                  <SyntaxHighlighter
+                    language="sql"
+                    style={vscDarkPlus}
+                    customStyle={{
+                      background: "transparent",
+                      padding: 0,
+                      margin: 0,
+                      fontSize: "0.85rem",
+                      lineHeight: "1.7",
+                      fontFamily: '"Fira Code", monospace',
+                    }}
+                    showLineNumbers={true}
+                    wrapLines={true} // Wraps long lines to prevent horizontal break
+                  >
+                    {output}
+                  </SyntaxHighlighter>
+                </div>
+              </div>
+
+              {/* Status Bar */}
+              <div className="h-8 shrink-0 bg-[#252526] border-t border-white/5 flex items-center px-4 text-[10px] text-slate-500 font-mono select-none">
+                <Terminal className="w-3 h-3 mr-2 opacity-50" />
+                <span>Ready</span>
+                <span className="mx-2 opacity-20">|</span>
+                <span>UTF-8</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {/* --- LIMIT MODAL --- */}
       <AnimatePresence>
         {showLimitModal && !isPro && (
-          <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+            onClick={() => setShowLimitModal(false)}
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowLimitModal(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-white rounded-xl shadow-2xl z-50 p-6 border border-gray-200"
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl relative overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-start mb-4">
-                <div className="bg-red-50 p-3 rounded-full">
-                  <Lock className="w-6 h-6 text-red-500" />
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100 rounded-full blur-3xl opacity-50" />
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mb-6">
+                  <Lock className="w-6 h-6 text-slate-900" />
                 </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                  Guest limit reached
+                </h3>
+                <p className="text-slate-500 text-sm leading-relaxed mb-8">
+                  You've used your {GUEST_LIMIT} free queries. Sign up to
+                  continue generating SQL without limits.
+                </p>
                 <button
-                  onClick={() => setShowLimitModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  onClick={() => (window.location.href = "/auth/signin")}
+                  className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-medium hover:bg-indigo-600 transition-colors shadow-lg"
                 >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
-                Guest Limit Reached
-              </h3>
-              <p className="text-gray-500 text-sm mb-6">
-                You've generated 2 queries. This result was{" "}
-                <strong>not saved</strong> to your history. Sign in to save
-                unlimited queries.
-              </p>
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={handleRedirectToLogin}
-                  className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
-                >
-                  Sign In / Sign Up
+                  Start Free Trial
                 </button>
                 <button
                   onClick={() => setShowLimitModal(false)}
-                  className="w-full text-gray-500 py-2 text-sm hover:text-gray-800"
+                  className="w-full mt-3 py-2 text-sm text-slate-400 hover:text-slate-600"
                 >
-                  Continue as Guest
+                  Close
                 </button>
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
