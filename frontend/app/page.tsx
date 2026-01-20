@@ -59,19 +59,26 @@ const LandingPage = () => {
             </p>
           </div>
 
-          {/* RIGHT COLUMN: VIDEO (The Yellow Area) */}
+       
           <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
             <HeroVideo />
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 rounded-xl bg-amber-800 p-2 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 bg-radial from-cyan-100 via-blue-300 to-indigo-400 rounded-xl border-2 border-black   p-2 lg:grid-cols-2 gap-4">
           {tools.map((tool, index) => (
             <div
               key={index}
-              className={`
-                group relative p-8 rounded-lg  border transition-all duration-300 hover:shadow-xl hover:-translate-y-1  hover:border-black hover:scale-[1.01]
-                ${"bg-white border-slate-200 shadow-sm "} 
-              `}
+              className="
+    group relative p-8 rounded-xl
+    bg-white/20
+    backdrop-blur-2xl
+    border border-white/30
+    shadow-lg
+    transition-all duration-300
+    hover:shadow-2xl
+    hover:-translate-y-1
+    hover:scale-[1.02]
+  "
             >
               <a href={tool.link}>
                 <h3 className="group transition-all duration-500 ease-in-out text-2xl font-semibold mb-3 tracking-normal hover:tracking-widest group-hover:text-blue-600 flex items-center gap-2">
