@@ -36,26 +36,27 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-black   selection:bg-green-300">
+    <div className="min-h-screen bg-white text-black bg-linear-to-t  from-amber-50 via-amber-100 amber-200 amber-400 to-amber-700   selection:bg-green-300">
       {/* Navbar */}
-      <nav className="max-w-7xl mx-auto px-6 py-8 flex justify-center items-center">
-        <div className="text-2xl font-semibold rounded-2xl underline-offset-4 decoration-2 decoration-transparent transition-all duration-300 hover:decoration-blue-500 hover:underline  tracking-wider ">
-          GET<span className="text-amber-800"> SQL</span>
+      <nav className="max-w-7xl mx-auto px-6 py-8  flex justify-center items-center">
+        <div className="text-5xl font-light tracking-tight">
+          query<span className="font-extrabold">.</span>
         </div>
       </nav>
 
       <main className="max-w-7xl  mx-auto px-6">
         <div className="flex flex-col lg:flex-row items-center gap-12 mb-24">
-          {/* LEFT COLUMN: TEXT */}
           <div className="lg:w-1/2 text-left">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-wide mb-6 leading-tight">
-              Get Your Queries Instantly
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight mb-6 leading-[1.1]">
+              SQL that works.
               <br />
-              <span className="text-amber-800">with natural language.</span>
+              <span className="text-black/80 font-medium">
+                From intent to execution.
+              </span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-600 hover:tracking-widest transition-all duration-300 leading-relaxed mb-8 max-w-lg">
-              The all-in-one toolkit for generating and fixing SQL, eliminating
-              the need to browse endless documentation.
+            <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mb-8 max-w-lg">
+              Generate, fix, explain, and optimize SQL using plain English and
+              your schema.
             </p>
           </div>
 
@@ -67,7 +68,7 @@ const LandingPage = () => {
          */}
         {/* bg-radial from-zinc-100 via-amber-200 to-zinc-300 */}
         <div
-          className="grid grid-cols-1 md:grid-cols-2   bg-radial from-teal-50 via-amber-200 amber-400 amber-600 to-amber-800
+          className="grid grid-cols-1 md:grid-cols-2   bg-radial from-amber-50 via-amber-200 amber-400 amber-600 to-amber-800
  rounded-xl border-2 border-black   p-2 lg:grid-cols-2 gap-4"
         >
           {tools.map((tool, index) => (
@@ -108,7 +109,7 @@ const LandingPage = () => {
             </div>
           ))}
         </div>
-        <div className="transition-all   duration-500 ease-in-out  hover:tracking-widest text-xl  text-black leading-relaxed ">
+        <div className="mt-16 text-lg text-black/70 leading-relaxed">
           <AutoTypingText />
         </div>
       </main>

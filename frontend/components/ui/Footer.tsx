@@ -8,7 +8,7 @@ const APP_NAME = "the best sql tool on the internet";
 
 export function Footer() {
   return (
-    <footer className="border-t w-full">
+    <footer className="border-t w-full  bg-linear-to-b from-amber-50 via-amber-100  to-amber-700">
       <div className="container mx-auto px-4 md:px-6 py-6">
         <div className="flex flex-col md:flex-row items-center justify-between">
           {/* Copyright Notice */}
