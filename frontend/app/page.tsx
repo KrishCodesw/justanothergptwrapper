@@ -59,12 +59,17 @@ const LandingPage = () => {
             </p>
           </div>
 
-       
           <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
             <HeroVideo />
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 bg-radial from-cyan-100 via-blue-300 to-indigo-400 rounded-xl border-2 border-black   p-2 lg:grid-cols-2 gap-4">
+        {/* bg-radial from-teal-100 via-amber-200 to-orange-300
+         */}
+        {/* bg-radial from-zinc-100 via-amber-200 to-zinc-300 */}
+        <div
+          className="grid grid-cols-1 md:grid-cols-2   bg-radial from-teal-50 via-amber-200 amber-400 amber-600 to-amber-800
+ rounded-xl border-2 border-black   p-2 lg:grid-cols-2 gap-4"
+        >
           {tools.map((tool, index) => (
             <div
               key={index}
