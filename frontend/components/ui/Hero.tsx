@@ -53,8 +53,13 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
 
   // UI State
   const [isSchemaOpen, setIsSchemaOpen] = useState(false);
-  const [showHistory, setShowHistory] = useState(false); // Default closed for cleaner start
+  const [showHistory, setShowHistory] = useState(false); // Desktop history drawer
   const [showLimitModal, setShowLimitModal] = useState(false);
+  // Mobile UI State
+  const [mobileTab, setMobileTab] = useState<"input" | "output" | "history">(
+    "input",
+  );
+  const [showMobileNav, setShowMobileNav] = useState(false);
 
   // --- Load Logic ---
   useEffect(() => {
@@ -147,14 +152,115 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
 
   return (
     <div className="flex h-screen w-full bg-[#f8f9fc] text-slate-900 font-sans overflow-hidden selection:bg-indigo-100 selection:text-indigo-900 relative">
-      {/* ================= 1. LEFT DOCK (Navigation) ================= */}
+      {/* ================= MOBILE NAV ================= */}
+      <nav className="md:hidden fixed top-0 left-0 w-full z-40 bg-white border-b border-slate-100 flex items-center justify-between px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-2">
+          <button
+            className="p-2 rounded-lg bg-indigo-600 text-white shadow"
+            onClick={() => setShowMobileNav(true)}
+            aria-label="Open menu"
+          >
+            <LayoutTemplate className="w-5 h-5" />
+          </button>
+          <span className="font-bold text-lg tracking-wide">GETSQL</span>
+        </div>
+        <div className="flex gap-2">
+          <button
+            className={`p-2 rounded-lg ${mobileTab === "input" ? "bg-indigo-100 text-indigo-700" : "text-slate-400"}`}
+            onClick={() => setMobileTab("input")}
+            aria-label="Input"
+          >
+            Input
+          </button>
+          <button
+            className={`p-2 rounded-lg ${mobileTab === "output" ? "bg-indigo-100 text-indigo-700" : "text-slate-400"}`}
+            onClick={() => setMobileTab("output")}
+            disabled={!output}
+            aria-label="Output"
+          >
+            Output
+          </button>
+          <button
+            className={`p-2 rounded-lg ${mobileTab === "history" ? "bg-indigo-100 text-indigo-700" : "text-slate-400"}`}
+            onClick={() => setMobileTab("history")}
+            aria-label="History"
+          >
+            History
+          </button>
+        </div>
+      </nav>
+
+      {/* ================= MOBILE NAV DRAWER ================= */}
+      {showMobileNav && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex">
+          <div className="w-64 bg-white h-full shadow-2xl flex flex-col py-6 px-4 relative animate-slidein">
+            <button
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600"
+              onClick={() => setShowMobileNav(false)}
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="mb-8 flex items-center gap-2">
+              <LayoutTemplate className="w-6 h-6 text-indigo-600" />
+              <span className="font-bold text-xl tracking-wide">GETSQL</span>
+            </div>
+            <nav className="flex flex-col gap-2 mt-4">
+              <button
+                className={`text-left px-4 py-3 rounded-lg font-medium transition-all ${mobileTab === "input" ? "bg-indigo-100 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}
+                onClick={() => {
+                  setMobileTab("input");
+                  setShowMobileNav(false);
+                }}
+                aria-label="Input"
+              >
+                Input
+              </button>
+              <button
+                className={`text-left px-4 py-3 rounded-lg font-medium transition-all ${mobileTab === "output" ? "bg-indigo-100 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}
+                onClick={() => {
+                  setMobileTab("output");
+                  setShowMobileNav(false);
+                }}
+                disabled={!output}
+                aria-label="Output"
+              >
+                Output
+              </button>
+              <button
+                className={`text-left px-4 py-3 rounded-lg font-medium transition-all ${mobileTab === "history" ? "bg-indigo-100 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}
+                onClick={() => {
+                  setMobileTab("history");
+                  setShowMobileNav(false);
+                }}
+                aria-label="History"
+              >
+                History
+              </button>
+            </nav>
+            <div className="mt-auto pt-8">
+              <button
+                className="w-full flex items-center gap-2 px-4 py-3 rounded-lg font-semibold bg-red-50 text-red-700 hover:bg-red-100 transition-all"
+                onClick={() => {
+                  window.location.href = "/auth/logout";
+                }}
+                aria-label="Logout"
+              >
+                <Lock className="w-5 h-5" /> Logout
+              </button>
+            </div>
+          </div>
+          <div className="flex-1" onClick={() => setShowMobileNav(false)} />
+        </div>
+      )}
+
+      {/* ================= DESKTOP NAV ================= */}
       <nav className="hidden md:flex flex-col items-center py-6 w-18 bg-white border-r border-slate-100 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0">
         <div className="mb-8">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
             <LayoutTemplate className="w-5 h-5 text-white" />
           </div>
         </div>
-
         <div className="flex flex-col gap-4 w-full px-3">
           <Tooltip text="History">
             <button
@@ -168,7 +274,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
               <History className="w-5 h-5" />
             </button>
           </Tooltip>
-
           <Tooltip text="New Query">
             <button
               onClick={() => {
@@ -183,24 +288,16 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
         </div>
       </nav>
 
-      {/* ================= 2. HISTORY DRAWER ================= */}
+      {/* ================= 2. HISTORY DRAWER (DESKTOP) ================= */}
       <AnimatePresence>
         {showHistory && (
           <motion.aside
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 300, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            className="
-  hidden
-  md:flex md:flex-col
-  h-full
-  shrink-0
-  bg-white
-  border-r border-slate-100
-  z-20
-  overflow-y-auto overflow-x-hidden
-"
+            className="hidden md:flex md:flex-col h-full shrink-0 bg-white border-r border-slate-100 z-20 overflow-y-auto overflow-x-hidden"
           >
+            {/* ...existing code... */}
             <div className="p-5 flex-1 overflow-y-auto">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pl-1">
                 Recent Queries
@@ -248,7 +345,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
                 )}
               </div>
             </div>
-
             {!isPro && (
               <div className="p-4 border-t border-slate-100 bg-slate-50/50">
                 <div className="flex justify-between text-xs font-medium text-slate-500 mb-2">
@@ -271,117 +367,255 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
         )}
       </AnimatePresence>
 
-      {/* ================= 3. WORKSPACE (Split Pane) ================= */}
-      <main className="flex-1 flex flex-col md:flex-row relative z-10 overflow-hidden">
-        {/* --- LEFT: INPUT PANE --- */}
-        {/* min-w-0 is CRITICAL for flex items to shrink properly when the right pane expands */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#f8f9fc] relative">
-          <div className="flex-1 overflow-y-auto px-4 md:px-0">
-            <div className="max-w-3xl mx-auto w-full py-8 md:py-12">
-              {/* Header */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-8 px-2"
-              >
-                <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-                  Ask your database
-                </h1>
-                <p className="text-slate-500 text-sm mt-1">
-                  Transform natural language into optimized SQL
-                </p>
-              </motion.div>
-
-              {/* The "Card" */}
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
-                {/* Prompt Input */}
-                <div className="p-6">
-                  <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="e.g. Find users who signed up in the last 7 days and ordered more than twice..."
-                    className="w-full h-32 md:h-40 resize-none outline-none text-lg text-slate-700 placeholder:text-slate-300 bg-transparent font-medium leading-relaxed"
-                    spellCheck={false}
+      {/* ================= 2b. HISTORY DRAWER (MOBILE) ================= */}
+      {mobileTab === "history" && (
+        <div className="md:hidden fixed inset-0 top-14 z-30 bg-white overflow-y-auto">
+          <div className="p-5">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pl-1">
+              Recent Queries
+            </h2>
+            <div className="space-y-2">
+              {history.length === 0 ? (
+                <div className="text-sm text-slate-400 italic pl-1">
+                  No history found.
+                </div>
+              ) : (
+                history.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      loadSession(item);
+                      setMobileTab("input");
+                    }}
+                    className="group relative p-3 rounded-xl bg-slate-50 border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm cursor-pointer transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full ${item.sql ? "bg-emerald-400" : "bg-orange-300"}`}
+                      />
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {new Date(item.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-slate-700 truncate">
+                      {item.query}
+                    </p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeHistoryItem(item.id);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-md transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+            {!isPro && (
+              <div className="mt-6 p-4 border-t border-slate-100 bg-slate-50/50">
+                <div className="flex justify-between text-xs font-medium text-slate-500 mb-2">
+                  <span>Guest Usage</span>
+                  <span>
+                    {history.length}/{GUEST_LIMIT}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${history.length >= GUEST_LIMIT ? "bg-red-500" : "bg-indigo-500"}`}
+                    style={{
+                      width: `${Math.min((history.length / GUEST_LIMIT) * 100, 100)}%`,
+                    }}
                   />
                 </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-                {/* Schema Toggle */}
-                <div className="border-t border-slate-50">
-                  <button
-                    onClick={() => setIsSchemaOpen(!isSchemaOpen)}
-                    className="w-full flex items-center gap-2 px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider hover:bg-slate-50 transition-colors"
-                  >
-                    {isSchemaOpen ? (
-                      <ChevronDown className="w-3 h-3" />
-                    ) : (
-                      <ChevronRight className="w-3 h-3" />
-                    )}
-                    Context: Schema
-                    {!schema && (
-                      <span className="ml-auto text-[10px] text-indigo-400 normal-case flex items-center gap-1">
-                        Required
-                      </span>
-                    )}
-                  </button>
-
-                  <AnimatePresence>
-                    {isSchemaOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden bg-slate-50/50"
-                      >
-                        <div className="p-6 pt-2">
-                          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                            <div className="flex items-center gap-2 mb-2 text-xs text-slate-400 font-mono">
-                              <Database className="w-3 h-3" /> schema.sql
+      {/* ================= 3. WORKSPACE (Split Pane) ================= */}
+      <main className="flex-1 flex flex-col md:flex-row relative z-10 overflow-hidden pt-14 md:pt-0">
+        {/* --- MOBILE TABS --- */}
+        {/* --- INPUT PANE --- */}
+        {(mobileTab === "input" ||
+          (output === "" && mobileTab === "output")) && (
+          <div className="flex-1 flex flex-col min-w-0 bg-[#f8f9fc] relative md:static md:block">
+            <div className="flex-1 overflow-y-auto px-4 md:px-0">
+              <div className="max-w-3xl mx-auto w-full py-8 md:py-12">
+                {/* Header */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-8 px-2"
+                >
+                  <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+                    Ask your database
+                  </h1>
+                  <p className="text-slate-500 text-sm mt-1">
+                    Transform natural language into optimized SQL
+                  </p>
+                </motion.div>
+                {/* The "Card" */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+                  {/* Prompt Input */}
+                  <div className="p-6">
+                    <textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="e.g. Find users who signed up in the last 7 days and ordered more than twice..."
+                      className="w-full h-32 md:h-40 resize-none outline-none text-lg text-slate-700 placeholder:text-slate-300 bg-transparent font-medium leading-relaxed"
+                      spellCheck={false}
+                    />
+                  </div>
+                  {/* Schema Toggle */}
+                  <div className="border-t border-slate-50">
+                    <button
+                      onClick={() => setIsSchemaOpen(!isSchemaOpen)}
+                      className="w-full flex items-center gap-2 px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider hover:bg-slate-50 transition-colors"
+                    >
+                      {isSchemaOpen ? (
+                        <ChevronDown className="w-3 h-3" />
+                      ) : (
+                        <ChevronRight className="w-3 h-3" />
+                      )}
+                      Context: Schema
+                      {!schema && (
+                        <span className="ml-auto text-[10px] text-indigo-400 normal-case flex items-center gap-1">
+                          Required
+                        </span>
+                      )}
+                    </button>
+                    <AnimatePresence>
+                      {isSchemaOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden bg-slate-50/50"
+                        >
+                          <div className="p-6 pt-2">
+                            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                              <div className="flex items-center gap-2 mb-2 text-xs text-slate-400 font-mono">
+                                <Database className="w-3 h-3" /> schema.sql
+                              </div>
+                              <textarea
+                                value={schema}
+                                onChange={(e) => setSchema(e.target.value)}
+                                placeholder="CREATE TABLE users (id INT, name TEXT...);"
+                                className="w-full h-32 bg-transparent resize-none outline-none text-xs font-mono text-slate-600 leading-normal"
+                              />
                             </div>
-                            <textarea
-                              value={schema}
-                              onChange={(e) => setSchema(e.target.value)}
-                              placeholder="CREATE TABLE users (id INT, name TEXT...);"
-                              className="w-full h-32 bg-transparent resize-none outline-none text-xs font-mono text-slate-600 leading-normal"
-                            />
                           </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Footer Actions */}
-                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                  <button
-                    onClick={handleGenerate}
-                    disabled={loading || !input}
-                    className="ml-auto flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
-                  >
-                    {loading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        Generate <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  {/* Footer Actions */}
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                    <button
+                      onClick={handleGenerate}
+                      disabled={loading || !input}
+                      className="ml-auto flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
+                    >
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          Generate <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* --- RIGHT: OUTPUT PANE (Fixed Overflow Issue) --- */}
+        {/* --- OUTPUT PANE --- */}
+        {output && mobileTab === "output" && (
+          <div className="fixed inset-0 top-14 md:static md:w-[45%] md:min-w-[400px] bg-[#1e1e1e] flex flex-col border-l border-slate-800 shadow-2xl z-40">
+            {/* Toolbar */}
+            <div className="h-14 shrink-0 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-[#1e1e1e]">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
+                </div>
+                <span className="text-xs font-mono text-slate-500 ml-2">
+                  result.sql
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={copyCode}
+                  className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+                {/* Close Button for User Control */}
+                <button
+                  onClick={() => {
+                    setOutput("");
+                    setMobileTab("input");
+                  }}
+                  className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            {/* Editor Surface - Correctly Scrollable */}
+            <div className="flex-1 relative overflow-hidden">
+              <div className="absolute inset-0 overflow-auto custom-scrollbar p-6">
+                <SyntaxHighlighter
+                  language="sql"
+                  style={vscDarkPlus}
+                  customStyle={{
+                    background: "transparent",
+                    padding: 0,
+                    margin: 0,
+                    fontSize: "0.85rem",
+                    lineHeight: "1.7",
+                    fontFamily: '"Fira Code", monospace',
+                  }}
+                  showLineNumbers={true}
+                  wrapLines={true}
+                >
+                  {output}
+                </SyntaxHighlighter>
+              </div>
+            </div>
+            {/* Status Bar */}
+            <div className="h-8 shrink-0 bg-[#252526] border-t border-white/5 flex items-center px-4 text-[10px] text-slate-500 font-mono select-none">
+              <Terminal className="w-3 h-3 mr-2 opacity-50" />
+              <span>Ready</span>
+              <span className="mx-2 opacity-20">|</span>
+              <span>UTF-8</span>
+            </div>
+          </div>
+        )}
+        {/* --- DESKTOP OUTPUT PANE --- */}
         <AnimatePresence>
-          {output && (
+          {output && mobileTab !== "output" && (
             <motion.div
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="absolute inset-0 md:static md:w-[45%] md:min-w-[400px] bg-[#1e1e1e] flex flex-col border-l border-slate-800 shadow-2xl z-40"
+              className="hidden md:flex md:w-[45%] md:min-w-[400px] bg-[#1e1e1e] flex-col border-l border-slate-800 shadow-2xl z-40"
             >
-              {/* Toolbar */}
+              {/* ...existing code... */}
               <div className="h-14 shrink-0 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-[#1e1e1e]">
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1.5">
@@ -393,7 +627,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
                     result.sql
                   </span>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <button
                     onClick={copyCode}
@@ -414,7 +647,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
                   </button>
                 </div>
               </div>
-
               {/* Editor Surface - Correctly Scrollable */}
               <div className="flex-1 relative overflow-hidden">
                 <div className="absolute inset-0 overflow-auto custom-scrollbar p-6">
@@ -430,13 +662,12 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
                       fontFamily: '"Fira Code", monospace',
                     }}
                     showLineNumbers={true}
-                    wrapLines={true} // Wraps long lines to prevent horizontal break
+                    wrapLines={true}
                   >
                     {output}
                   </SyntaxHighlighter>
                 </div>
               </div>
-
               {/* Status Bar */}
               <div className="h-8 shrink-0 bg-[#252526] border-t border-white/5 flex items-center px-4 text-[10px] text-slate-500 font-mono select-none">
                 <Terminal className="w-3 h-3 mr-2 opacity-50" />
