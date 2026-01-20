@@ -58,6 +58,18 @@ const LandingPage = () => {
               Generate, fix, explain, and optimize SQL using plain English and
               your schema.
             </p>
+            <div className="mt-8 flex gap-4">
+              <a
+                href="/nl2sql"
+                className="px-6 py-3 rounded-lg bg-black text-white text-sm font-medium hover:opacity-90 transition"
+              >
+                Try with a query
+              </a>
+
+              <span className="text-sm text-black/50 self-center">
+                No signup required
+              </span>
+            </div>
           </div>
 
           <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
