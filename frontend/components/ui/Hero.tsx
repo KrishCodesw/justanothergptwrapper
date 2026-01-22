@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { useHistory } from "../hooks/useHistory";
@@ -9,7 +9,6 @@ import {
   Copy,
   Check,
   ArrowRight,
-  Sparkles,
   Zap,
   LayoutTemplate,
   History,
@@ -21,6 +20,9 @@ import {
   Database,
   Terminal,
   Trash2,
+  Code2,
+  Cpu,
+  Menu,
 } from "lucide-react";
 
 const GUEST_LIMIT = 2;
@@ -29,13 +31,19 @@ const GUEST_LIMIT = 2;
 const Tooltip = ({
   children,
   text,
+  side = "right",
 }: {
   children: React.ReactNode;
   text: string;
+  side?: "right" | "top";
 }) => (
   <div className="group relative flex items-center justify-center">
     {children}
-    <span className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-lg">
+    <span
+      className={`absolute ${
+        side === "right" ? "left-full ml-2" : "bottom-full mb-2"
+      } px-2 py-1 bg-slate-800 text-white text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-xl`}
+    >
       {text}
     </span>
   </div>
@@ -47,19 +55,18 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
   // Core State
   const [input, setInput] = useState("");
   const [schema, setSchema] = useState("");
-  const [output, setOutput] = useState(""); // SQL Output
+  const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // UI State
   const [isSchemaOpen, setIsSchemaOpen] = useState(false);
-  const [showHistory, setShowHistory] = useState(false); // Desktop history drawer
+  const [showHistory, setShowHistory] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  
   // Mobile UI State
-  const [mobileTab, setMobileTab] = useState<"input" | "output" | "history">(
-    "input",
-  );
-  const [showMobileNav, setShowMobileNav] = useState(false);
+  const [activeTab, setActiveTab] = useState<"editor" | "output" | "history">("editor");
+  const bottomNavRef = useRef<HTMLDivElement>(null);
 
   // --- Load Logic ---
   useEffect(() => {
@@ -80,7 +87,7 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
               sql: item.sql,
               schema: item.sourceSchema,
               timestamp: new Date(item.createdAt).getTime(),
-            })),
+            }))
           );
         })
         .catch(console.error);
@@ -92,13 +99,17 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
     if (!input.trim()) return;
 
     if (!schema.trim()) {
-      setIsSchemaOpen(true); // Open drawer to nudge user
+      setIsSchemaOpen(true);
       return;
     }
 
     setLoading(true);
     localStorage.setItem("sql_active_schema", schema);
-    setOutput(""); // Reset output for animation effect
+    
+    // On mobile, stay on editor during load, switch to output on success
+    if (window.innerWidth < 768) {
+      // Optional: scroll to bottom
+    }
 
     const combinedPrompt = `\n### SCHEMA:\n${schema}\n\n### REQUEST:\n${input}\n`;
 
@@ -113,7 +124,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
       const data = await response.json();
 
       if (isPro) {
-        // Save Pro
         fetch("/api/queries/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -121,7 +131,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
         }).catch(console.error);
         addToHistory(input, "GENERATE", data.response, schema);
       } else {
-        // Guest Limit
         if (history.length < GUEST_LIMIT) {
           addToHistory(input, data.response, schema);
         } else {
@@ -130,8 +139,10 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
       }
 
       setOutput(data.response);
+      setActiveTab("output"); // Auto-switch tab on mobile
     } catch (error) {
-      setOutput("-- Error: Ensure backend is running.");
+      setOutput("-- Error: Ensure backend is running or check connection.");
+      setActiveTab("output");
     } finally {
       setLoading(false);
     }
@@ -142,6 +153,7 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
     setOutput(item.sql);
     setSchema(item.schema || "");
     setIsSchemaOpen(!!item.schema);
+    setActiveTab("editor"); // Switch back to editor to show loaded state
   };
 
   const copyCode = () => {
@@ -150,112 +162,174 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="flex h-screen w-full bg-[#f8f9fc] text-slate-900 font-sans overflow-hidden selection:bg-indigo-100 selection:text-indigo-900 relative">
-      {/* ================= MOBILE NAV ================= */}
-      <nav className="md:hidden fixed top-0 left-0 w-full z-40 bg-white border-b border-slate-100 flex items-center justify-between px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-2">
-          <button
-            className="p-2 rounded-lg bg-indigo-600 text-white shadow"
-            onClick={() => setShowMobileNav(true)}
-            aria-label="Open menu"
-          >
-            <LayoutTemplate className="w-5 h-5" />
-          </button>
-          <span className="font-bold text-lg tracking-wide">GETSQL</span>
-        </div>
-        <div className="flex gap-2">
-          <button
-            className={`p-2 rounded-lg ${mobileTab === "input" ? "bg-indigo-100 text-indigo-700" : "text-slate-400"}`}
-            onClick={() => setMobileTab("input")}
-            aria-label="Input"
-          >
-            Input
-          </button>
-          <button
-            className={`p-2 rounded-lg ${mobileTab === "output" ? "bg-indigo-100 text-indigo-700" : "text-slate-400"}`}
-            onClick={() => setMobileTab("output")}
-            disabled={!output}
-            aria-label="Output"
-          >
-            Output
-          </button>
-          <button
-            className={`p-2 rounded-lg ${mobileTab === "history" ? "bg-indigo-100 text-indigo-700" : "text-slate-400"}`}
-            onClick={() => setMobileTab("history")}
-            aria-label="History"
-          >
-            History
-          </button>
-        </div>
-      </nav>
+  // --- Sub-components for cleaner render ---
 
-      {/* ================= MOBILE NAV DRAWER ================= */}
-      {showMobileNav && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex">
-          <div className="w-64 bg-white h-full shadow-2xl flex flex-col py-6 px-4 relative animate-slidein">
-            <button
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600"
-              onClick={() => setShowMobileNav(false)}
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="mb-8 flex items-center gap-2">
-              <LayoutTemplate className="w-6 h-6 text-indigo-600" />
-              <span className="font-bold text-xl tracking-wide">GETSQL</span>
-            </div>
-            <nav className="flex flex-col gap-2 mt-4">
-              <button
-                className={`text-left px-4 py-3 rounded-lg font-medium transition-all ${mobileTab === "input" ? "bg-indigo-100 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}
-                onClick={() => {
-                  setMobileTab("input");
-                  setShowMobileNav(false);
-                }}
-                aria-label="Input"
-              >
-                Input
-              </button>
-              <button
-                className={`text-left px-4 py-3 rounded-lg font-medium transition-all ${mobileTab === "output" ? "bg-indigo-100 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}
-                onClick={() => {
-                  setMobileTab("output");
-                  setShowMobileNav(false);
-                }}
-                disabled={!output}
-                aria-label="Output"
-              >
-                Output
-              </button>
-              <button
-                className={`text-left px-4 py-3 rounded-lg font-medium transition-all ${mobileTab === "history" ? "bg-indigo-100 text-indigo-700" : "text-slate-700 hover:bg-slate-50"}`}
-                onClick={() => {
-                  setMobileTab("history");
-                  setShowMobileNav(false);
-                }}
-                aria-label="History"
-              >
-                History
-              </button>
-            </nav>
-            <div className="mt-auto pt-8">
-              <button
-                className="w-full flex items-center gap-2 px-4 py-3 rounded-lg font-semibold bg-red-50 text-red-700 hover:bg-red-100 transition-all"
-                onClick={() => {
-                  window.location.href = "/auth/logout";
-                }}
-                aria-label="Logout"
-              >
-                <Lock className="w-5 h-5" /> Logout
-              </button>
-            </div>
+  const HistoryList = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-5 shrink-0 border-b border-slate-100/50">
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          Time Travel
+        </h2>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+        {history.length === 0 ? (
+          <div className="text-sm text-slate-400 italic p-2 text-center mt-10">
+            No queries yet.
           </div>
-          <div className="flex-1" onClick={() => setShowMobileNav(false)} />
+        ) : (
+          history.map((item) => (
+            <motion.div
+              layout
+              key={item.id}
+              onClick={() => loadSession(item)}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="group relative p-3 rounded-xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-md cursor-pointer transition-all duration-200 active:scale-95"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      item.sql ? "bg-emerald-400" : "bg-orange-300"
+                    }`}
+                  />
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {new Date(item.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeHistoryItem(item.id);
+                  }}
+                  className="md:opacity-0 group-hover:opacity-100 p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500 rounded-md transition-all"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <p className="text-sm font-medium text-slate-700 line-clamp-2 leading-relaxed">
+                {item.query}
+              </p>
+            </motion.div>
+          ))
+        )}
+      </div>
+      {!isPro && (
+        <div className="p-4 border-t border-slate-100 bg-slate-50">
+          <div className="flex justify-between text-xs font-medium text-slate-500 mb-2">
+            <span>Free Tier</span>
+            <span>
+              {history.length}/{GUEST_LIMIT}
+            </span>
+          </div>
+          <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min((history.length / GUEST_LIMIT) * 100, 100)}%` }}
+              className={`h-full ${
+                history.length >= GUEST_LIMIT ? "bg-red-500" : "bg-indigo-500"
+              }`}
+            />
+          </div>
         </div>
       )}
+    </div>
+  );
 
-      {/* ================= DESKTOP NAV ================= */}
-      <nav className="hidden md:flex flex-col items-center py-6 w-18 bg-white border-r border-slate-100 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0">
+  const EditorPanel = () => (
+    <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
+      {/* Header text */}
+      <div className="mb-6 md:mb-8 px-1">
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+          Ask your database
+        </h1>
+        <p className="text-slate-500 text-sm md:text-base mt-2">
+          Natural language to optimized SQL.
+        </p>
+      </div>
+
+      {/* Main Card */}
+      <motion.div 
+        layout
+        className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0"
+      >
+        <div className="flex-1 p-4 md:p-6 flex flex-col min-h-0">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="e.g. Find users who signed up in the last 7 days and ordered more than twice..."
+            className="w-full flex-1 resize-none outline-none text-base md:text-lg text-slate-700 placeholder:text-slate-300 bg-transparent font-medium leading-relaxed"
+            spellCheck={false}
+          />
+        </div>
+
+        {/* Schema Drawer */}
+        <div className="border-t border-slate-50 bg-slate-50/30">
+          <button
+            onClick={() => setIsSchemaOpen(!isSchemaOpen)}
+            className="w-full flex items-center justify-between px-6 py-3 text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-wider hover:bg-slate-50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+               <Database className="w-3.5 h-3.5" />
+               Schema Context
+            </div>
+            <div className="flex items-center gap-2">
+                {!schema && <span className="text-[10px] text-amber-500 font-semibold lowercase px-2 py-0.5 bg-amber-50 rounded-full">Required</span>}
+                {isSchemaOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            </div>
+          </button>
+          
+          <AnimatePresence>
+            {isSchemaOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="px-6 pb-6 pt-0">
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
+                    <textarea
+                      value={schema}
+                      onChange={(e) => setSchema(e.target.value)}
+                      placeholder="CREATE TABLE users (id INT, name TEXT...);"
+                      className="w-full h-32 p-4 bg-transparent resize-none outline-none text-xs font-mono text-slate-600 leading-normal"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Action Bar */}
+        <div className="p-4 bg-white border-t border-slate-100 flex justify-end items-center gap-4">
+             <button
+                onClick={handleGenerate}
+                disabled={loading || !input}
+                className="relative overflow-hidden flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 active:scale-95"
+              >
+                {loading && (
+                    <div className="absolute inset-0 bg-indigo-500 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 animate-spin text-indigo-100" />
+                    </div>
+                )}
+                <Sparkles className="w-4 h-4" />
+                <span>Generate SQL</span>
+              </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen w-full bg-[#F3F5F8] text-slate-900 font-sans overflow-hidden selection:bg-indigo-100 selection:text-indigo-900">
+      
+      {/* ================= DESKTOP SIDEBAR ================= */}
+      <nav className="hidden md:flex flex-col items-center py-6 w-[72px] bg-white border-r border-slate-200 z-30 shrink-0">
         <div className="mb-8">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
             <LayoutTemplate className="w-5 h-5 text-white" />
@@ -267,7 +341,7 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
               onClick={() => setShowHistory(!showHistory)}
               className={`p-3 rounded-xl transition-all duration-300 w-full flex justify-center ${
                 showHistory
-                  ? "bg-slate-100 text-slate-900"
+                  ? "bg-slate-100 text-indigo-600"
                   : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
               }`}
             >
@@ -278,7 +352,9 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
             <button
               onClick={() => {
                 setInput("");
+                setSchema("");
                 setOutput("");
+                setActiveTab("editor");
               }}
               className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-300 w-full flex justify-center"
             >
@@ -286,370 +362,125 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
             </button>
           </Tooltip>
         </div>
+        <div className="mt-auto px-3 w-full">
+            <Tooltip text="Logout">
+                <button 
+                 onClick={() => window.location.href = "/auth/logout"}
+                 className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all w-full flex justify-center"
+                >
+                    <Lock className="w-5 h-5" />
+                </button>
+            </Tooltip>
+        </div>
       </nav>
 
-      {/* ================= 2. HISTORY DRAWER (DESKTOP) ================= */}
+      {/* ================= HISTORY DRAWER (DESKTOP) ================= */}
       <AnimatePresence>
         {showHistory && (
           <motion.aside
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 300, opacity: 1 }}
+            animate={{ width: 320, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            className="hidden md:flex md:flex-col h-full shrink-0 bg-white border-r border-slate-100 z-20 overflow-y-auto overflow-x-hidden"
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="hidden md:block h-full shrink-0 bg-[#FAFAFA] border-r border-slate-200 z-20 overflow-hidden"
           >
-            {/* ...existing code... */}
-            <div className="p-5 flex-1 overflow-y-auto">
-              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pl-1">
-                Recent Queries
-              </h2>
-              <div className="space-y-2">
-                {history.length === 0 ? (
-                  <div className="text-sm text-slate-400 italic pl-1">
-                    No history found.
-                  </div>
-                ) : (
-                  history.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      layout
-                      onClick={() => loadSession(item)}
-                      className="group relative p-3 rounded-xl bg-slate-50 border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm cursor-pointer transition-all duration-200"
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            item.sql ? "bg-emerald-400" : "bg-orange-300"
-                          }`}
-                        />
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          {new Date(item.timestamp).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium text-slate-700 truncate">
-                        {item.query}
-                      </p>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeHistoryItem(item.id);
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-md transition-all"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </motion.div>
-                  ))
-                )}
-              </div>
-            </div>
-            {!isPro && (
-              <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-                <div className="flex justify-between text-xs font-medium text-slate-500 mb-2">
-                  <span>Guest Usage</span>
-                  <span>
-                    {history.length}/{GUEST_LIMIT}
-                  </span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${history.length >= GUEST_LIMIT ? "bg-red-500" : "bg-indigo-500"}`}
-                    style={{
-                      width: `${Math.min((history.length / GUEST_LIMIT) * 100, 100)}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
+            <HistoryList />
           </motion.aside>
         )}
       </AnimatePresence>
 
-      {/* ================= 2b. HISTORY DRAWER (MOBILE) ================= */}
-      {mobileTab === "history" && (
-        <div className="md:hidden fixed inset-0 top-14 z-30 bg-white overflow-y-auto">
-          <div className="p-5">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pl-1">
-              Recent Queries
-            </h2>
-            <div className="space-y-2">
-              {history.length === 0 ? (
-                <div className="text-sm text-slate-400 italic pl-1">
-                  No history found.
-                </div>
-              ) : (
-                history.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      loadSession(item);
-                      setMobileTab("input");
-                    }}
-                    className="group relative p-3 rounded-xl bg-slate-50 border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm cursor-pointer transition-all duration-200"
-                  >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div
-                        className={`w-1.5 h-1.5 rounded-full ${item.sql ? "bg-emerald-400" : "bg-orange-300"}`}
-                      />
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {new Date(item.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium text-slate-700 truncate">
-                      {item.query}
-                    </p>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeHistoryItem(item.id);
-                      }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-md transition-all"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-            {!isPro && (
-              <div className="mt-6 p-4 border-t border-slate-100 bg-slate-50/50">
-                <div className="flex justify-between text-xs font-medium text-slate-500 mb-2">
-                  <span>Guest Usage</span>
-                  <span>
-                    {history.length}/{GUEST_LIMIT}
-                  </span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${history.length >= GUEST_LIMIT ? "bg-red-500" : "bg-indigo-500"}`}
-                    style={{
-                      width: `${Math.min((history.length / GUEST_LIMIT) * 100, 100)}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* ================= MAIN AREA (Split View) ================= */}
+      <main className="flex-1 flex flex-col md:flex-row relative z-10 overflow-hidden">
+        
+        {/* --- LEFT PANE (Editor) --- */}
+        <div 
+          className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ${
+             // On desktop, if output exists, we compress editor slightly or keep 50/50
+             // On mobile, we use Tabs instead of split
+             "" 
+          }`}
+        >
+             {/* Mobile Top Bar */}
+             <div className="md:hidden h-14 bg-white border-b border-slate-100 flex items-center px-4 justify-between shrink-0">
+                 <div className="flex items-center gap-2">
+                     <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <LayoutTemplate className="w-4 h-4 text-white" />
+                     </div>
+                     <span className="font-bold text-slate-800">GETSQL</span>
+                 </div>
+                 <div className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
+                    {isPro ? "PRO" : "GUEST"}
+                 </div>
+             </div>
 
-      {/* ================= 3. WORKSPACE (Split Pane) ================= */}
-      <main className="flex-1 flex flex-col md:flex-row relative z-10 overflow-hidden pt-14 md:pt-0">
-        {/* --- MOBILE TABS --- */}
-        {/* --- INPUT PANE --- */}
-        {(mobileTab === "input" ||
-          (output === "" && mobileTab === "output")) && (
-          <div className="flex-1 flex flex-col min-w-0 bg-[#f8f9fc] relative md:static md:block">
-            <div className="flex-1 overflow-y-auto px-4 md:px-0">
-              <div className="max-w-3xl mx-auto w-full py-8 md:py-12">
-                {/* Header */}
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-8 px-2"
-                >
-                  <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-                    Ask your database
-                  </h1>
-                  <p className="text-slate-500 text-sm mt-1">
-                    Transform natural language into optimized SQL
-                  </p>
-                </motion.div>
-                {/* The "Card" */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
-                  {/* Prompt Input */}
-                  <div className="p-6">
-                    <textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      placeholder="e.g. Find users who signed up in the last 7 days and ordered more than twice..."
-                      className="w-full h-32 md:h-40 resize-none outline-none text-lg text-slate-700 placeholder:text-slate-300 bg-transparent font-medium leading-relaxed"
-                      spellCheck={false}
-                    />
-                  </div>
-                  {/* Schema Toggle */}
-                  <div className="border-t border-slate-50">
-                    <button
-                      onClick={() => setIsSchemaOpen(!isSchemaOpen)}
-                      className="w-full flex items-center gap-2 px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider hover:bg-slate-50 transition-colors"
-                    >
-                      {isSchemaOpen ? (
-                        <ChevronDown className="w-3 h-3" />
-                      ) : (
-                        <ChevronRight className="w-3 h-3" />
-                      )}
-                      Context: Schema
-                      {!schema && (
-                        <span className="ml-auto text-[10px] text-indigo-400 normal-case flex items-center gap-1">
-                          Required
-                        </span>
-                      )}
-                    </button>
-                    <AnimatePresence>
-                      {isSchemaOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden bg-slate-50/50"
+             {/* Content Area */}
+             <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 custom-scrollbar pb-24 md:pb-8">
+                <AnimatePresence mode="wait">
+                    {activeTab === "editor" && (
+                        <motion.div 
+                            key="editor"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="h-full"
                         >
-                          <div className="p-6 pt-2">
-                            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                              <div className="flex items-center gap-2 mb-2 text-xs text-slate-400 font-mono">
-                                <Database className="w-3 h-3" /> schema.sql
-                              </div>
-                              <textarea
-                                value={schema}
-                                onChange={(e) => setSchema(e.target.value)}
-                                placeholder="CREATE TABLE users (id INT, name TEXT...);"
-                                className="w-full h-32 bg-transparent resize-none outline-none text-xs font-mono text-slate-600 leading-normal"
-                              />
-                            </div>
-                          </div>
+                            <EditorPanel />
                         </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  {/* Footer Actions */}
-                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                    <button
-                      onClick={handleGenerate}
-                      disabled={loading || !input}
-                      className="ml-auto flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
-                    >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          Generate <ArrowRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+                    )}
+                    {activeTab === "history" && (
+                         <motion.div 
+                         key="history"
+                         initial={{ opacity: 0, x: 20 }}
+                         animate={{ opacity: 1, x: 0 }}
+                         exit={{ opacity: 0, x: 20 }}
+                         className="h-full"
+                     >
+                         <HistoryList />
+                     </motion.div>
+                    )}
+                </AnimatePresence>
+             </div>
+        </div>
 
-        {/* --- OUTPUT PANE --- */}
-        {output && mobileTab === "output" && (
-          <div className="fixed inset-0 top-14 md:static md:w-[45%] md:min-w-[400px] bg-[#1e1e1e] flex flex-col border-l border-slate-800 shadow-2xl z-40">
-            {/* Toolbar */}
-            <div className="h-14 shrink-0 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-[#1e1e1e]">
-              <div className="flex items-center gap-3">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
-                </div>
-                <span className="text-xs font-mono text-slate-500 ml-2">
-                  result.sql
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={copyCode}
-                  className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-                >
-                  {copied ? (
-                    <Check className="w-4 h-4 text-emerald-400" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </button>
-                {/* Close Button for User Control */}
-                <button
-                  onClick={() => {
-                    setOutput("");
-                    setMobileTab("input");
-                  }}
-                  className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            {/* Editor Surface - Correctly Scrollable */}
-            <div className="flex-1 relative overflow-hidden">
-              <div className="absolute inset-0 overflow-auto custom-scrollbar p-6">
-                <SyntaxHighlighter
-                  language="sql"
-                  style={vscDarkPlus}
-                  customStyle={{
-                    background: "transparent",
-                    padding: 0,
-                    margin: 0,
-                    fontSize: "0.85rem",
-                    lineHeight: "1.7",
-                    fontFamily: '"Fira Code", monospace',
-                  }}
-                  showLineNumbers={true}
-                  wrapLines={true}
-                >
-                  {output}
-                </SyntaxHighlighter>
-              </div>
-            </div>
-            {/* Status Bar */}
-            <div className="h-8 shrink-0 bg-[#252526] border-t border-white/5 flex items-center px-4 text-[10px] text-slate-500 font-mono select-none">
-              <Terminal className="w-3 h-3 mr-2 opacity-50" />
-              <span>Ready</span>
-              <span className="mx-2 opacity-20">|</span>
-              <span>UTF-8</span>
-            </div>
-          </div>
-        )}
-        {/* --- DESKTOP OUTPUT PANE --- */}
+        {/* --- RIGHT PANE (Output) --- */}
+        {/* DESKTOP: Always show if output exists. MOBILE: Show only if activeTab is output */}
         <AnimatePresence>
-          {output && mobileTab !== "output" && (
+          {(output && (window.innerWidth >= 768 || activeTab === "output")) && (
             <motion.div
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="hidden md:flex md:w-[45%] md:min-w-[400px] bg-[#1e1e1e] flex-col border-l border-slate-800 shadow-2xl z-40"
+              className="fixed inset-0 top-14 md:top-0 md:static md:w-[45%] md:min-w-[450px] bg-[#0f172a] flex flex-col border-l border-slate-800 shadow-2xl z-40"
             >
-              {/* ...existing code... */}
-              <div className="h-14 shrink-0 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-[#1e1e1e]">
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
-                  </div>
-                  <span className="text-xs font-mono text-slate-500 ml-2">
-                    result.sql
-                  </span>
+              {/* Terminal Header */}
+              <div className="h-12 shrink-0 border-b border-white/10 flex items-center justify-between px-4 bg-[#0f172a] select-none">
+                <div className="flex items-center gap-2 text-slate-400">
+                    <Terminal className="w-4 h-4" />
+                    <span className="text-xs font-mono font-medium">sql_output.log</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={copyCode}
-                    className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                    className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-white/5 rounded-md transition-colors"
                   >
-                    {copied ? (
-                      <Check className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
-                  {/* Close Button for User Control */}
                   <button
-                    onClick={() => setOutput("")}
-                    className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5"
+                    onClick={() => {
+                        setOutput("");
+                        setActiveTab("editor");
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-white hover:bg-red-500/20 rounded-md transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              {/* Editor Surface - Correctly Scrollable */}
-              <div className="flex-1 relative overflow-hidden">
-                <div className="absolute inset-0 overflow-auto custom-scrollbar p-6">
+
+              {/* Code Surface */}
+              <div className="flex-1 relative overflow-hidden bg-[#0f172a]">
+                <div className="absolute inset-0 overflow-auto custom-scrollbar p-4 md:p-6">
                   <SyntaxHighlighter
                     language="sql"
                     style={vscDarkPlus}
@@ -657,37 +488,68 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
                       background: "transparent",
                       padding: 0,
                       margin: 0,
-                      fontSize: "0.85rem",
-                      lineHeight: "1.7",
-                      fontFamily: '"Fira Code", monospace',
+                      fontSize: "0.9rem",
+                      lineHeight: "1.6",
+                      fontFamily: '"JetBrains Mono", "Fira Code", monospace',
                     }}
                     showLineNumbers={true}
                     wrapLines={true}
+                    lineNumberStyle={{ minWidth: "2.5em", paddingRight: "1em", color: "#475569" }}
                   >
                     {output}
                   </SyntaxHighlighter>
                 </div>
               </div>
-              {/* Status Bar */}
-              <div className="h-8 shrink-0 bg-[#252526] border-t border-white/5 flex items-center px-4 text-[10px] text-slate-500 font-mono select-none">
-                <Terminal className="w-3 h-3 mr-2 opacity-50" />
-                <span>Ready</span>
-                <span className="mx-2 opacity-20">|</span>
-                <span>UTF-8</span>
-              </div>
+              
+              {/* Footer Status */}
+               <div className="h-8 shrink-0 bg-[#0b1120] flex items-center px-4 text-[10px] text-slate-500 font-mono gap-4">
+                  <span className="flex items-center gap-1"><Cpu className="w-3 h-3" /> 0.4s</span>
+                  <span className="flex items-center gap-1"><Database className="w-3 h-3" /> Postgres</span>
+               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
-      {/* --- LIMIT MODAL --- */}
+      {/* ================= MOBILE BOTTOM NAV ================= */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 z-50 safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-around p-2">
+              <button 
+                onClick={() => setActiveTab("editor")}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === "editor" ? "text-indigo-600 bg-indigo-50" : "text-slate-400"}`}
+              >
+                  <Code2 className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">Editor</span>
+              </button>
+              
+              <button 
+                onClick={() => setActiveTab("output")}
+                disabled={!output}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all relative ${activeTab === "output" ? "text-indigo-600 bg-indigo-50" : "text-slate-400 disabled:opacity-30"}`}
+              >
+                  {output && <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />}
+                  <Terminal className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">Result</span>
+              </button>
+
+              <button 
+                onClick={() => setActiveTab("history")}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${activeTab === "history" ? "text-indigo-600 bg-indigo-50" : "text-slate-400"}`}
+              >
+                  <History className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">History</span>
+              </button>
+          </div>
+      </div>
+
+      {/* ================= LIMIT MODAL ================= */}
       <AnimatePresence>
         {showLimitModal && !isPro && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+            className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
             onClick={() => setShowLimitModal(false)}
           >
             <motion.div
@@ -696,35 +558,58 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
               className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl relative overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100 rounded-full blur-3xl opacity-50" />
-              <div className="relative z-10">
-                <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mb-6">
-                  <Lock className="w-6 h-6 text-slate-900" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">
-                  Guest limit reached
-                </h3>
-                <p className="text-slate-500 text-sm leading-relaxed mb-8">
-                  You've used your {GUEST_LIMIT} free queries. Sign up to
-                  continue generating SQL without limits.
-                </p>
-                <button
-                  onClick={() => (window.location.href = "/auth/signin")}
-                  className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-medium hover:bg-indigo-600 transition-colors shadow-lg"
-                >
-                  Start Free Trial
-                </button>
-                <button
-                  onClick={() => setShowLimitModal(false)}
-                  className="w-full mt-3 py-2 text-sm text-slate-400 hover:text-slate-600"
-                >
-                  Close
-                </button>
+              <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center mb-6">
+                <Lock className="w-6 h-6 text-indigo-600" />
               </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                Usage limit reached
+              </h3>
+              <p className="text-slate-500 text-sm leading-relaxed mb-8">
+                You've used your {GUEST_LIMIT} free queries. Sign in to
+                unlock unlimited SQL generation.
+              </p>
+              <button
+                onClick={() => (window.location.href = "/auth/signin")}
+                className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-medium hover:bg-indigo-600 transition-colors shadow-lg"
+              >
+                Start Free Trial
+              </button>
+              <button
+                onClick={() => setShowLimitModal(false)}
+                className="w-full mt-3 py-2 text-sm text-slate-400 hover:text-slate-600"
+              >
+                Close
+              </button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 184, 0.3);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(148, 163, 184, 0.5);
+        }
+        /* Mobile safe area for fixed bottom nav */
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+      `}</style>
     </div>
   );
+}
+
+// --- Icons used for extra polish ---
+function Sparkles({ className }: { className?: string }) {
+    return <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
 }
