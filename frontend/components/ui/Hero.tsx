@@ -265,6 +265,22 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
             spellCheck={false}
           />
         </div>
+        {/* Action Bar - now outside flex-1 for proper layout */}
+        <div className="px-4 md:px-6 mt-4 mb-2 flex justify-end items-center gap-4">
+          <button
+            onClick={handleGenerate}
+            disabled={loading || !input}
+            className="relative overflow-hidden flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 active:scale-95 border border-indigo-500"
+          >
+            {loading && (
+              <div className="absolute inset-0 bg-indigo-500 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-indigo-100" />
+              </div>
+            )}
+            <Sparkles className="w-4 h-4" />
+            <span>Generate SQL</span>
+          </button>
+        </div>
 
         {/* Schema Drawer */}
         <div className="border-t border-slate-50 bg-slate-50/30">
@@ -286,40 +302,23 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
             {isSchemaOpen && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
+                animate={{ height: 200, opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="px-6 pb-6 pt-0">
+                <div className="px-6 pb-6 pt-0 h-full overflow-y-auto">
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
                     <textarea
                       value={schema}
                       onChange={(e) => setSchema(e.target.value)}
                       placeholder="CREATE TABLE users (id INT, name TEXT...);"
-                      className="w-full h-32 p-4 bg-transparent resize-none outline-none text-xs font-mono text-slate-600 leading-normal"
+                      className="w-full min-h-32 p-4 bg-transparent resize-none outline-none text-xs font-mono text-slate-600 leading-normal"
                     />
                   </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-
-        {/* Action Bar */}
-        <div className="p-4 bg-white border-t border-slate-100 flex justify-end items-center gap-4">
-             <button
-                onClick={handleGenerate}
-                disabled={loading || !input}
-                className="relative overflow-hidden flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 active:scale-95"
-              >
-                {loading && (
-                    <div className="absolute inset-0 bg-indigo-500 flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 animate-spin text-indigo-100" />
-                    </div>
-                )}
-                <Sparkles className="w-4 h-4" />
-                <span>Generate SQL</span>
-              </button>
         </div>
       </motion.div>
     </div>
