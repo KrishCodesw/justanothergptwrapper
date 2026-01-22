@@ -68,7 +68,7 @@ const LandingPage = () => {
          */}
         {/* bg-radial from-zinc-100 via-amber-200 to-zinc-300 */}
         <div
-          className="grid grid-cols-1 md:grid-cols-2   bg-radial from-amber-50 via-amber-200 amber-400 amber-600 to-amber-200
+          className="grid grid-cols-1 md:grid-cols-2   bg-radial from-amber-50 via-amber-200 amber-400 amber-500 to-amber-700
  rounded-xl border-2 border-black   p-2 lg:grid-cols-2 gap-4"
         >
           {tools.map((tool, index) => (
