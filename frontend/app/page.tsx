@@ -36,7 +36,7 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-black bg-linear-to-t  from-amber-50 via-amber-100 amber-200 amber-400 to-amber-800   selection:bg-green-300">
+    <div className="min-h-screen bg-white text-black bg-linear-to-t  from-amber-50 via-amber-100 amber-200 amber-400 to-amber-100   selection:bg-green-300">
       {/* Navbar */}
       <nav className="max-w-7xl mx-auto px-6 py-8  flex justify-center items-center">
         <div className="text-5xl font-light tracking-tight">
@@ -68,7 +68,7 @@ const LandingPage = () => {
          */}
         {/* bg-radial from-zinc-100 via-amber-200 to-zinc-300 */}
         <div
-          className="grid grid-cols-1 md:grid-cols-2   bg-radial from-amber-50 via-amber-200 amber-400 amber-600 to-amber-800
+          className="grid grid-cols-1 md:grid-cols-2   bg-radial from-amber-50 via-amber-200 amber-400 amber-600 to-amber-200
  rounded-xl border-2 border-black   p-2 lg:grid-cols-2 gap-4"
         >
           {tools.map((tool, index) => (

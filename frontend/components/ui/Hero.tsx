@@ -1,54 +1,196 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { useHistory } from "../hooks/useHistory";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
-  Copy,
-  Check,
-  ArrowRight,
-  Zap,
-  LayoutTemplate,
-  History,
-  Lock,
-  ChevronRight,
-  ChevronDown,
-  Loader2,
-  X,
-  Database,
-  Terminal,
-  Trash2,
-  Code2,
-  Cpu,
-  Menu,
+  Copy, Check, Zap, LayoutTemplate, History, Lock, ChevronRight,
+  ChevronDown, Loader2, X, Database, Terminal, Trash2, Code2, Cpu, Menu,
 } from "lucide-react";
 
 const GUEST_LIMIT = 2;
 
 // --- Helper Components ---
-const Tooltip = ({
-  children,
-  text,
-  side = "right",
-}: {
-  children: React.ReactNode;
-  text: string;
-  side?: "right" | "top";
-}) => (
+const Tooltip = ({ children, text, side = "right" }: { children: React.ReactNode; text: string; side?: "right" | "top"; }) => (
   <div className="group relative flex items-center justify-center">
     {children}
-    <span
-      className={`absolute ${
-        side === "right" ? "left-full ml-2" : "bottom-full mb-2"
-      } px-2 py-1 bg-slate-800 text-white text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-xl`}
-    >
+    <span className={`absolute ${side === "right" ? "left-full ml-2" : "bottom-full mb-2"} px-2 py-1 bg-slate-800 text-white text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-xl`}>
       {text}
     </span>
   </div>
 );
 
+// --- 1. Define Props Interfaces ---
+interface HistoryListProps {
+  history: any[];
+  loadSession: (item: any) => void;
+  removeHistoryItem: (id: string) => void;
+  isPro?: boolean;
+}
+
+interface EditorPanelProps {
+  input: string;
+  setInput: (val: string) => void;
+  schema: string;
+  setSchema: (val: string) => void;
+  isSchemaOpen: boolean;
+  setIsSchemaOpen: (val: boolean) => void;
+  handleGenerate: () => void;
+  loading: boolean;
+}
+
+// --- 2. Move HistoryList OUTSIDE ---
+const HistoryList = React.memo(({ history, loadSession, removeHistoryItem, isPro }: HistoryListProps) => (
+  <div className="flex flex-col h-full">
+    <div className="p-5 shrink-0 border-b border-slate-100/50">
+      <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+        Time Travel
+      </h2>
+    </div>
+    <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+      {history.length === 0 ? (
+        <div className="text-sm text-slate-400 italic p-2 text-center mt-10">
+          No queries yet.
+        </div>
+      ) : (
+        history.map((item) => (
+          <motion.div
+            layout
+            key={item.id}
+            onClick={() => loadSession(item)}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="group relative p-3 rounded-xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-md cursor-pointer transition-all duration-200 active:scale-95"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className={`w-1.5 h-1.5 rounded-full ${item.sql ? "bg-emerald-400" : "bg-orange-300"}`} />
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {new Date(item.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeHistoryItem(item.id);
+                }}
+                className="md:opacity-0 group-hover:opacity-100 p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500 rounded-md transition-all"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <p className="text-sm font-medium text-slate-700 line-clamp-2 leading-relaxed">
+              {item.query}
+            </p>
+          </motion.div>
+        ))
+      )}
+    </div>
+    {!isPro && (
+      <div className="p-4 border-t border-slate-100 bg-slate-50">
+        <div className="flex justify-between text-xs font-medium text-slate-500 mb-2">
+          <span>Free Tier</span>
+          <span>{history.length}/{GUEST_LIMIT}</span>
+        </div>
+        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min((history.length / GUEST_LIMIT) * 100, 100)}%` }}
+            className={`h-full ${history.length >= GUEST_LIMIT ? "bg-red-500" : "bg-indigo-500"}`}
+          />
+        </div>
+      </div>
+    )}
+  </div>
+));
+HistoryList.displayName = "HistoryList";
+
+// --- 3. Move EditorPanel OUTSIDE ---
+const EditorPanel = React.memo(({ input, setInput, schema, setSchema, isSchemaOpen, setIsSchemaOpen, handleGenerate, loading }: EditorPanelProps) => (
+  <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
+    <div className="mb-6 md:mb-8 px-1">
+      <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+        Ask your database
+      </h1>
+      <p className="text-slate-500 text-sm md:text-base mt-2">
+        Natural language to optimized SQL.
+      </p>
+    </div>
+
+    <motion.div
+      layout
+      className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0"
+    >
+      <div className="flex-1 p-4 md:p-6 flex flex-col min-h-0">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="e.g. Find users who signed up in the last 7 days and ordered more than twice..."
+          className="w-full flex-1 resize-none outline-none text-base md:text-lg text-slate-700 placeholder:text-slate-300 bg-transparent font-medium leading-relaxed"
+          spellCheck={false}
+        />
+      </div>
+      <div className="px-4 md:px-6 mt-4 mb-2 flex justify-end items-center gap-4">
+        <button
+          onClick={handleGenerate}
+          disabled={loading || !input}
+          className="relative overflow-hidden flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 active:scale-95 border border-indigo-500"
+        >
+          {loading && (
+            <div className="absolute inset-0 bg-indigo-500 flex items-center justify-center">
+              <Loader2 className="w-5 h-5 animate-spin text-indigo-100" />
+            </div>
+          )}
+          <Sparkles className="w-4 h-4" />
+          <span>Generate SQL</span>
+        </button>
+      </div>
+
+      <div className="border-t border-slate-50 bg-slate-50/30">
+        <button
+          onClick={() => setIsSchemaOpen(!isSchemaOpen)}
+          className="w-full flex items-center justify-between px-6 py-3 text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-wider hover:bg-slate-50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Database className="w-3.5 h-3.5" />
+            Schema Context
+          </div>
+          <div className="flex items-center gap-2">
+            {!schema && <span className="text-[10px] text-amber-500 font-semibold lowercase px-2 py-0.5 bg-amber-50 rounded-full">Required</span>}
+            {isSchemaOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </div>
+        </button>
+        <AnimatePresence>
+          {isSchemaOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 200, opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="px-6 pb-6 pt-0 h-full overflow-y-auto">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
+                  <textarea
+                    value={schema}
+                    onChange={(e) => setSchema(e.target.value)}
+                    placeholder="CREATE TABLE users (id INT, name TEXT...);"
+                    className="w-full min-h-32 p-4 bg-transparent resize-none outline-none text-xs font-mono text-slate-600 leading-normal"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  </div>
+));
+EditorPanel.displayName = "EditorPanel";
+
+// --- 4. Main Component ---
 export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
   const { history, addToHistory, removeHistoryItem, setHistory } = useHistory();
 
@@ -66,7 +208,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
   
   // Mobile UI State
   const [activeTab, setActiveTab] = useState<"editor" | "output" | "history">("editor");
-  const bottomNavRef = useRef<HTMLDivElement>(null);
 
   // --- Load Logic ---
   useEffect(() => {
@@ -75,7 +216,9 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
       setSchema(savedSchema);
       setIsSchemaOpen(true);
     }
+  }, []);
 
+  useEffect(() => {
     if (isPro) {
       fetch("/api/queries/get")
         .then((res) => (res.ok ? res.json() : []))
@@ -86,7 +229,7 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
               query: item.prompt,
               sql: item.sql,
               schema: item.sourceSchema,
-              timestamp: new Date(item.createdAt).getTime(),
+              timestamp: new Date(item.created_at).getTime(),
             }))
           );
         })
@@ -106,11 +249,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
     setLoading(true);
     localStorage.setItem("sql_active_schema", schema);
     
-    // On mobile, stay on editor during load, switch to output on success
-    if (window.innerWidth < 768) {
-      // Optional: scroll to bottom
-    }
-
     const combinedPrompt = `\n### SCHEMA:\n${schema}\n\n### REQUEST:\n${input}\n`;
 
     try {
@@ -139,7 +277,7 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
       }
 
       setOutput(data.response);
-      setActiveTab("output"); // Auto-switch tab on mobile
+      setActiveTab("output");
     } catch (error) {
       setOutput("-- Error: Ensure backend is running or check connection.");
       setActiveTab("output");
@@ -153,7 +291,7 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
     setOutput(item.sql);
     setSchema(item.schema || "");
     setIsSchemaOpen(!!item.schema);
-    setActiveTab("editor"); // Switch back to editor to show loaded state
+    setActiveTab("editor");
   };
 
   const copyCode = () => {
@@ -162,186 +300,18 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // --- Sub-components for cleaner render ---
-
-  const HistoryList = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-5 shrink-0 border-b border-slate-100/50">
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-          Time Travel
-        </h2>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-        {history.length === 0 ? (
-          <div className="text-sm text-slate-400 italic p-2 text-center mt-10">
-            No queries yet.
-          </div>
-        ) : (
-          history.map((item) => (
-            <motion.div
-              layout
-              key={item.id}
-              onClick={() => loadSession(item)}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="group relative p-3 rounded-xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-md cursor-pointer transition-all duration-200 active:scale-95"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      item.sql ? "bg-emerald-400" : "bg-orange-300"
-                    }`}
-                  />
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {new Date(item.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeHistoryItem(item.id);
-                  }}
-                  className="md:opacity-0 group-hover:opacity-100 p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500 rounded-md transition-all"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <p className="text-sm font-medium text-slate-700 line-clamp-2 leading-relaxed">
-                {item.query}
-              </p>
-            </motion.div>
-          ))
-        )}
-      </div>
-      {!isPro && (
-        <div className="p-4 border-t border-slate-100 bg-slate-50">
-          <div className="flex justify-between text-xs font-medium text-slate-500 mb-2">
-            <span>Free Tier</span>
-            <span>
-              {history.length}/{GUEST_LIMIT}
-            </span>
-          </div>
-          <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min((history.length / GUEST_LIMIT) * 100, 100)}%` }}
-              className={`h-full ${
-                history.length >= GUEST_LIMIT ? "bg-red-500" : "bg-indigo-500"
-              }`}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  const EditorPanel = () => (
-    <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
-      {/* Header text */}
-      <div className="mb-6 md:mb-8 px-1">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-          Ask your database
-        </h1>
-        <p className="text-slate-500 text-sm md:text-base mt-2">
-          Natural language to optimized SQL.
-        </p>
-      </div>
-
-      {/* Main Card */}
-      <motion.div 
-        layout
-        className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0"
-      >
-        <div className="flex-1 p-4 md:p-6 flex flex-col min-h-0">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="e.g. Find users who signed up in the last 7 days and ordered more than twice..."
-            className="w-full flex-1 resize-none outline-none text-base md:text-lg text-slate-700 placeholder:text-slate-300 bg-transparent font-medium leading-relaxed"
-            spellCheck={false}
-          />
-        </div>
-        {/* Action Bar - now outside flex-1 for proper layout */}
-        <div className="px-4 md:px-6 mt-4 mb-2 flex justify-end items-center gap-4">
-          <button
-            onClick={handleGenerate}
-            disabled={loading || !input}
-            className="relative overflow-hidden flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 active:scale-95 border border-indigo-500"
-          >
-            {loading && (
-              <div className="absolute inset-0 bg-indigo-500 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-indigo-100" />
-              </div>
-            )}
-            <Sparkles className="w-4 h-4" />
-            <span>Generate SQL</span>
-          </button>
-        </div>
-
-        {/* Schema Drawer */}
-        <div className="border-t border-slate-50 bg-slate-50/30">
-          <button
-            onClick={() => setIsSchemaOpen(!isSchemaOpen)}
-            className="w-full flex items-center justify-between px-6 py-3 text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-wider hover:bg-slate-50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-               <Database className="w-3.5 h-3.5" />
-               Schema Context
-            </div>
-            <div className="flex items-center gap-2">
-                {!schema && <span className="text-[10px] text-amber-500 font-semibold lowercase px-2 py-0.5 bg-amber-50 rounded-full">Required</span>}
-                {isSchemaOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            </div>
-          </button>
-          
-          <AnimatePresence>
-            {isSchemaOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 200, opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="px-6 pb-6 pt-0 h-full overflow-y-auto">
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
-                    <textarea
-                      value={schema}
-                      onChange={(e) => setSchema(e.target.value)}
-                      placeholder="CREATE TABLE users (id INT, name TEXT...);"
-                      className="w-full min-h-32 p-4 bg-transparent resize-none outline-none text-xs font-mono text-slate-600 leading-normal"
-                    />
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
-    </div>
-  );
-
+  // --- Render ---
   return (
     <div className="flex h-screen w-full bg-[#F3F5F8] text-slate-900 font-sans overflow-hidden selection:bg-indigo-100 selection:text-indigo-900">
       
       {/* ================= DESKTOP SIDEBAR ================= */}
       <nav className="hidden md:flex flex-col items-center py-6 w-[72px] bg-white border-r border-slate-200 z-30 shrink-0">
-        <div className="mb-8">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-            <LayoutTemplate className="w-5 h-5 text-white" />
-          </div>
-        </div>
         <div className="flex flex-col gap-4 w-full px-3">
           <Tooltip text="History">
             <button
               onClick={() => setShowHistory(!showHistory)}
               className={`p-3 rounded-xl transition-all duration-300 w-full flex justify-center ${
-                showHistory
-                  ? "bg-slate-100 text-indigo-600"
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                showHistory ? "bg-slate-100 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
               }`}
             >
               <History className="w-5 h-5" />
@@ -362,14 +332,14 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
           </Tooltip>
         </div>
         <div className="mt-auto px-3 w-full">
-            <Tooltip text="Logout">
-                <button 
+           <Tooltip text="Logout">
+              <button 
                  onClick={() => window.location.href = "/auth/logout"}
                  className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all w-full flex justify-center"
-                >
-                    <Lock className="w-5 h-5" />
-                </button>
-            </Tooltip>
+               >
+                  <Lock className="w-5 h-5" />
+               </button>
+           </Tooltip>
         </div>
       </nav>
 
@@ -383,7 +353,13 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="hidden md:block h-full shrink-0 bg-[#FAFAFA] border-r border-slate-200 z-20 overflow-hidden"
           >
-            <HistoryList />
+            {/* 5. Pass props to HistoryList */}
+            <HistoryList 
+              history={history} 
+              loadSession={loadSession} 
+              removeHistoryItem={removeHistoryItem} 
+              isPro={isPro} 
+            />
           </motion.aside>
         )}
       </AnimatePresence>
@@ -392,13 +368,7 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
       <main className="flex-1 flex flex-col md:flex-row relative z-10 overflow-hidden">
         
         {/* --- LEFT PANE (Editor) --- */}
-        <div 
-          className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ${
-             // On desktop, if output exists, we compress editor slightly or keep 50/50
-             // On mobile, we use Tabs instead of split
-             "" 
-          }`}
-        >
+        <div className="flex-1 flex flex-col min-w-0 transition-all duration-500">
              {/* Mobile Top Bar */}
              <div className="md:hidden h-14 bg-white border-b border-slate-100 flex items-center px-4 justify-between shrink-0">
                  <div className="flex items-center gap-2">
@@ -423,26 +393,40 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
                             exit={{ opacity: 0, x: -20 }}
                             className="h-full"
                         >
-                            <EditorPanel />
+                            {/* 6. Pass props to EditorPanel */}
+                            <EditorPanel 
+                              input={input}
+                              setInput={setInput}
+                              schema={schema}
+                              setSchema={setSchema}
+                              isSchemaOpen={isSchemaOpen}
+                              setIsSchemaOpen={setIsSchemaOpen}
+                              handleGenerate={handleGenerate}
+                              loading={loading}
+                            />
                         </motion.div>
                     )}
                     {activeTab === "history" && (
-                         <motion.div 
-                         key="history"
-                         initial={{ opacity: 0, x: 20 }}
-                         animate={{ opacity: 1, x: 0 }}
-                         exit={{ opacity: 0, x: 20 }}
-                         className="h-full"
-                     >
-                         <HistoryList />
-                     </motion.div>
+                        <motion.div 
+                            key="history"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            className="h-full"
+                        >
+                            <HistoryList 
+                              history={history} 
+                              loadSession={loadSession} 
+                              removeHistoryItem={removeHistoryItem} 
+                              isPro={isPro} 
+                            />
+                        </motion.div>
                     )}
                 </AnimatePresence>
              </div>
         </div>
 
         {/* --- RIGHT PANE (Output) --- */}
-        {/* DESKTOP: Always show if output exists. MOBILE: Show only if activeTab is output */}
         <AnimatePresence>
           {(output && (window.innerWidth >= 768 || activeTab === "output")) && (
             <motion.div
@@ -452,7 +436,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed inset-0 top-14 md:top-0 md:static md:w-[45%] md:min-w-[450px] bg-[#0f172a] flex flex-col border-l border-slate-800 shadow-2xl z-40"
             >
-              {/* Terminal Header */}
               <div className="h-12 shrink-0 border-b border-white/10 flex items-center justify-between px-4 bg-[#0f172a] select-none">
                 <div className="flex items-center gap-2 text-slate-400">
                     <Terminal className="w-4 h-4" />
@@ -477,7 +460,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
                 </div>
               </div>
 
-              {/* Code Surface */}
               <div className="flex-1 relative overflow-hidden bg-[#0f172a]">
                 <div className="absolute inset-0 overflow-auto custom-scrollbar p-4 md:p-6">
                   <SyntaxHighlighter
@@ -500,7 +482,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
                 </div>
               </div>
               
-              {/* Footer Status */}
                <div className="h-8 shrink-0 bg-[#0b1120] flex items-center px-4 text-[10px] text-slate-500 font-mono gap-4">
                   <span className="flex items-center gap-1"><Cpu className="w-3 h-3" /> 0.4s</span>
                   <span className="flex items-center gap-1"><Database className="w-3 h-3" /> Postgres</span>
@@ -599,7 +580,6 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(148, 163, 184, 0.5);
         }
-        /* Mobile safe area for fixed bottom nav */
         .safe-area-bottom {
             padding-bottom: env(safe-area-inset-bottom);
         }
