@@ -137,15 +137,15 @@ const EditorPanel = React.memo(({ input, setInput, schema, setSchema, isSchemaOp
         <button
           onClick={handleGenerate}
           disabled={loading || !input}
-          className="relative overflow-hidden flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 active:scale-95 border border-indigo-500"
+          className="relative overflow-hidden flex items-center gap-2 bg-black text-white px-8 py-3 rounded-xl text-sm font-semibold disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 active:scale-95 border-dotted"
         >
           {loading && (
-            <div className="absolute inset-0 bg-indigo-500 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black flex items-center justify-center">
               <Loader2 className="w-5 h-5 animate-spin text-indigo-100" />
             </div>
           )}
-          <Sparkles className="w-4 h-4" />
-          <span>Generate SQL</span>
+          <span>Generate</span>
+          {/* <Sparkles className="w-4 h-4" /> */}
         </button>
       </div>
 
@@ -377,7 +377,7 @@ export default function ZenSqlEditor({ isPro }: { isPro?: boolean }) {
                      </div>
                      <span className="font-bold text-slate-800">GETSQL</span>
                  </div>
-                 <div className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
+                 <div className="text-xs font-medium text-slate-100 bg-slate-100 px-2 py-1 rounded-md">
                     {isPro ? "PRO" : "GUEST"}
                  </div>
              </div>
