@@ -11,13 +11,12 @@ export default function HomePage() {
   const { user, logout } = useAuthStore();
   const { history: localHistory, clearHistory, isLoaded } = useHistory();
   const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "done">(
-    "idle"
+    "idle",
   );
 
   // --- 1. THE SYNC LOGIC (Moved from Dashboard) ---
   useEffect(() => {
     const syncGuestData = async () => {
-      // Run ONLY if: User is logged in, Local history exists, and we haven't synced yet
       if (
         user &&
         isLoaded &&

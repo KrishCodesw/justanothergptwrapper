@@ -1,8 +1,6 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client"
-  output   = "../lib/generated/prisma" // Matches your structure
+  output   = "../lib/generated/prisma"
 }
 
 datasource db {
@@ -10,7 +8,89 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- ENUMS ---
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  full_name        String
+  status           UserStatus       @default(ACTIVE)
+  customer_id      String?          @unique
+  price_id         String?
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  accounts         Account[]
+  correctedQueries CorrectedQuery[]
+  queries          GeneratedQuery[]
+  explanation      ExplainedQuery[]
+  sessions         Session[]
+}
+
+model Account {
+  providerId       String
+  provider         AuthProvider
+  userId           String
+  password_hash    String?
+  provider_user_id String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, provider_user_id])
+  @@index([userId])
+  @@index([provider, providerId])
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String
+  expires_at DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt @map("last_used_at")
+  ip_address String?
+  user_agent String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires_at])
+}
+
+model GeneratedQuery {
+  id           String   @id @default(uuid())
+  prompt       String
+  sql          String
+  sourceSchema String
+  created_at   DateTime @default(now())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CorrectedQuery {
+  id              String   @id @default(uuid())
+  original_query  String
+  corrected_query String
+  type            String
+  risk_level      String
+  confidence      Float?
+  changes_made    String[]
+  created_at      DateTime @default(now())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ExplainedQuery {
+  id             String @id @default(uuid())
+  original_query String @db.Text
+  explanation    String @db.Text
+
+  created_at DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 enum AuthProvider {
   EMAIL_PASSWORD
   GOOGLE
@@ -22,88 +102,4 @@ enum UserStatus {
   PENDING_VERIFICATION
   SUSPENDED
   DELETED
-}
-
-// --- CORE USER DATA ---
-model User {
-  id          String     @id @default(uuid())
-  email       String     @unique // Index: @unique creates an index
-  full_name   String
-  status      UserStatus @default(ACTIVE)
-  customer_id String?    @unique
-  price_id    String?
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @updatedAt
-
-  // RELATIONS
-  accounts         Account[]
-  correctedQueries CorrectedQuery[]
-  queries          GeneratedQuery[]
-  sessions         Session[]
-}
-
-// --- AUTHENTICATION CREDENTIALS ---
-model Account {
-  providerId       String
-  provider         AuthProvider
-  userId           String
-  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  password_hash    String?
-  provider_user_id String
-
-  // PRIMARY KEY (for finding account by provider + provider-specific ID)
-  @@id([provider, provider_user_id])
-  // Index 1: For finding ALL accounts belonging to a user
-  @@index([userId])
-  // Index 2: For finding Email/Password account by email (providerId)
-  @@index([provider, providerId])
-}
-
-// --- SESSION (for tracking logged-in users) ---
-model Session {
-  id         String   @id @default(uuid()) // The session token
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expires_at DateTime
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt @map("last_used_at")
-  ip_address String?
-  user_agent String?
-
-  // Index 1: For finding a user's sessions
-  @@index([userId])
-  // Index 2: For efficiently cleaning up expired sessions
-  @@index([expires_at])
-}
-
-model GeneratedQuery {
-  id           String   @id @default(uuid())
-  prompt       String
-  sql          String   @db.Text
-  sourceSchema String   @db.Text
-  created_at   DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model CorrectedQuery {
-  id              String @id @default(uuid())
-  original_query  String @db.Text
-  corrected_query String @db.Text
-
-  type         String
-  risk_level   String
-  confidence   Float?
-  changes_made String[]
-
-  created_at DateTime @default(now())
-
-  // Relation to User
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
 }
