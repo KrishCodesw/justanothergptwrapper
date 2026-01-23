@@ -24,6 +24,9 @@ import {
   User,
   Sparkles,
   LayoutGrid,
+  Table,
+  Diamond,
+  Boxes,
 } from "lucide-react";
 
 // --- Types based on your JSON structure ---
@@ -302,7 +305,7 @@ export default function QueryExplainer({
                   <p className="text-sm font-medium text-slate-800">
                     {user.full_name}
                   </p>
-                  <p className="text-xs text-slate-500">Pro Plan</p>
+                  {/* <p className="text-xs text-slate-500">Pro Plan</p> */}
                 </div>
                 <button
                   onClick={handleLogout}
@@ -329,7 +332,7 @@ export default function QueryExplainer({
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300">
               <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                 <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
-                  <Database className="w-4 h-4 text-indigo-500" />
+                  <Database className="w-4 h-4" />
                   <span>Input SQL Query</span>
                 </div>
               </div>
@@ -344,14 +347,15 @@ export default function QueryExplainer({
                 <button
                   onClick={handleExplain}
                   disabled={loading || !input}
-                  className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300"
+                  className="flex items-center gap-2 bg-blue-800 text-white px-6 py-2.5 rounded-br-xl rounded-tl-xl text-sm font-extrabold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300"
                 >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Play className="w-4 h-4 fill-current" />
+                    // <Play className="w-4 h-4 fill-current" />
+                    ""
                   )}
-                  {loading ? "Analyzing Logic..." : "Explain Logic"}
+                  {loading ? "Analyzing Logic..." : "Explain"}
                 </button>
               </div>
             </div>
@@ -397,8 +401,9 @@ export default function QueryExplainer({
                   {/* Card: Tables */}
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                        <Database className="w-5 h-5" />
+                      <div className="p-2  bg-violet-50 text-black/80 rounded-lg">
+                        {/* <Database className="w-5 h-5" /> */}
+                        <Table className="w-5 h-5" />
                       </div>
                       <h3 className="font-semibold text-slate-800">
                         Tables Involved
@@ -422,7 +427,7 @@ export default function QueryExplainer({
                   {/* Card: Filters */}
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                      <div className="p-2 bg-violet-50 text-black/80 rounded-lg">
                         <Filter className="w-5 h-5" />
                       </div>
                       <h3 className="font-semibold text-slate-800">
@@ -437,7 +442,7 @@ export default function QueryExplainer({
                               key={idx}
                               className="flex items-start gap-2 text-sm text-slate-600"
                             >
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                              <CheckCircle2 className="w-4 h-4 text-black/80 shrink-0 mt-0.5" />
                               {filter}
                             </li>
                           ),
@@ -453,7 +458,7 @@ export default function QueryExplainer({
                   {/* Card: Joins */}
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-violet-50 text-violet-600 rounded-lg">
+                      <div className="p-2 bg-violet-50 text-black/80 rounded-lg">
                         <GitMerge className="w-5 h-5" />
                       </div>
                       <h3 className="font-semibold text-slate-800">
@@ -475,8 +480,8 @@ export default function QueryExplainer({
                   {/* Card: Aggregation (Spans 2 cols on large) */}
                   <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow md:col-span-2 lg:col-span-2">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
-                        <Calculator className="w-5 h-5" />
+                      <div className="p-2 bg-violet-50 text-black/80 rounded-lg">
+                        <Boxes className="w-5 h-5" />
                       </div>
                       <h3 className="font-semibold text-slate-800">
                         Aggregation & Grouping
@@ -484,7 +489,7 @@ export default function QueryExplainer({
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <span className="text-xs font-bold text-black/80 uppercase tracking-wider">
                           Grouping By
                         </span>
                         <p className="mt-1 text-sm font-medium text-slate-700">
@@ -495,7 +500,7 @@ export default function QueryExplainer({
                         </p>
                       </div>
                       <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <span className="text-xs font-bold text-black/80 uppercase tracking-wider">
                           Metrics
                         </span>
                         <p className="mt-1 text-sm font-medium text-slate-700">
@@ -509,16 +514,16 @@ export default function QueryExplainer({
                   </div>
 
                   {/* Card: Final Output */}
-                  <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 shadow-sm flex flex-col">
+                  <div className="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm flex flex-col">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-white text-indigo-600 rounded-lg shadow-xs">
+                      <div className="p-2 bg-violet-50 text-black/80 rounded-lg shadow-xs">
                         <FileOutput className="w-5 h-5" />
                       </div>
-                      <h3 className="font-semibold text-indigo-900">
+                      <h3 className="font-semibold text-black/80">
                         Final Output
                       </h3>
                     </div>
-                    <p className="text-sm text-indigo-800 leading-relaxed flex-1">
+                    <p className="text-sm text-black/80 leading-relaxed flex-1">
                       {result.detailed_analysis.final_output}
                     </p>
                   </div>
