@@ -50,7 +50,7 @@ function cn(...classes: (string | undefined | null | false)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-const GUEST_LIMIT = 5; // Adjusted for demo
+const GUEST_LIMIT = 2; // Adjusted for demo
 
 export default function QueryExplainer({
   isPro: initialIsPro,
@@ -106,7 +106,7 @@ export default function QueryExplainer({
     setResult(null);
 
     try {
-      // Replace with your actual FastAPI endpoint
+      // Call the FastAPI endpoint for explanation
       const response = await fetch("http://localhost:8000/explainquery", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,9 +118,20 @@ export default function QueryExplainer({
       const data: ExplainResponse = await response.json();
       setResult(data);
 
-      // Save to history (adapted for your store structure)
+      // Save to database if user is signed in
       if (isPro) {
-        // Call your backend save API here
+        try {
+          await fetch("/api/explained_queries/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              original_query: input,
+              explanation: data,
+            }),
+          });
+        } catch (saveError) {
+          console.error("Failed to save explained query to DB", saveError);
+        }
       }
 
       // Add to local history hook for UI display
@@ -210,22 +221,47 @@ export default function QueryExplainer({
           </div>
           <div className="space-y-1">
             {[...dbHistory, ...history].map((item: any) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setInput(item.original_query);
-                  setResult(item.metadata || item.result); // Assuming you save the JSON in metadata
-                  if (window.innerWidth < 1024) setSidebarOpen(false);
-                }}
-                className="w-full text-left group p-3 rounded-lg border border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all"
-              >
-                <p className="truncate text-sm font-medium text-slate-700">
-                  {item.original_query}
-                </p>
-                <span className="text-[10px] text-slate-400 mt-1 block">
-                  {new Date(item.timestamp).toLocaleDateString()}
-                </span>
-              </button>
+              <div key={item.id} className="relative group flex items-center">
+                <button
+                  onClick={async () => {
+                    setInput(item.original_query || item.query);
+                    setResult(null); // Clear previous result while loading
+                    if (item.processedData) {
+                      setResult(item.processedData);
+                    } else {
+                      try {
+                        const res = await fetch(
+                          `/api/explained_queries/get?id=${item.id}`,
+                        );
+                        if (res.ok) {
+                          const data = await res.json();
+                          setResult(data.explanation || data.result || data);
+                        } else {
+                          setResult(item.metadata || item.result || null);
+                        }
+                      } catch (err) {
+                        setResult(item.metadata || item.result || null);
+                      }
+                    }
+                    if (window.innerWidth < 1024) setSidebarOpen(false);
+                  }}
+                  className="flex-1 text-left group p-3 rounded-lg border border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all"
+                >
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {item.original_query || item.query}
+                  </p>
+                  <span className="text-sm text-slate-400 mt-1 block ">
+                    {new Date(item.timestamp).toLocaleDateString()}
+                  </span>
+                </button>
+                <button
+                  onClick={() => removeHistoryItem(item.id)}
+                  className="ml-2 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-opacity opacity-0 group-hover:opacity-100"
+                  title="Delete"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -320,7 +356,7 @@ export default function QueryExplainer({
             </div>
 
             {/* 2. RESULTS DASHBOARD */}
-            {result && (
+            {result && result.summary && (
               <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 space-y-6">
                 {/* A. Summary Header Card */}
                 <div className="bg-linear from-yellow-900 via-red-100 to-yellow-900 rounded-2xl p-6 md:p-8 text-black/80 shadow-xl shadow-indigo-200 relative overflow-hidden">
@@ -334,7 +370,9 @@ export default function QueryExplainer({
                           Query Analysis
                         </h2>
                         <p className="text-black/80 text-sm md:text-base max-w-2xl leading-relaxed opacity-90">
-                          {result.summary.purpose}
+                          {result.summary.purpose
+                            ? result.summary.purpose
+                            : "No summary available."}
                         </p>
                       </div>
                       <div className="shrink-0">
@@ -343,7 +381,9 @@ export default function QueryExplainer({
                             Complexity
                           </span>
                           <span className="text-lg font-bold">
-                            {result.summary.complexity_level}
+                            {result.summary.complexity_level
+                              ? result.summary.complexity_level
+                              : "-"}
                           </span>
                         </div>
                       </div>

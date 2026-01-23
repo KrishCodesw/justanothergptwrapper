@@ -81,7 +81,7 @@ model CorrectedQuery {
 model ExplainedQuery {
   id             String @id @default(uuid())
   original_query String @db.Text
-  explanation    String @db.Text
+  explanation    Json
 
   created_at DateTime @default(now())
 
