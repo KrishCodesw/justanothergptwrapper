@@ -289,7 +289,8 @@ export default function QueryExplainer({
               </button>
             )}
             <h1 className="text-sm font-semibold text-slate-500 hidden md:block">
-              SQL Analysis Tool
+              Hi {user?.full_name}, got questions about a SQL query?
+              <br /> We've got your back!
             </h1>
           </div>
 
@@ -377,7 +378,7 @@ export default function QueryExplainer({
                       </div>
                       <div className="shrink-0">
                         <div className="bg-white/20 backdrop-blur-md border border-white/20 px-4 py-2 rounded-lg flex flex-col items-center">
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-100">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-black">
                             Complexity
                           </span>
                           <span className="text-lg font-bold">
