@@ -6,7 +6,7 @@ export interface HistoryItem {
   id: string;
   query: string;              // original input
   sql?: string;   
-  type: "GENERATE" | "CORRECT";            // corrected SQL (optional)
+  type: "GENERATE" | "CORRECT"|"EXPLAIN";            // corrected SQL (optional)
   processedData?: {           // full processed data
     original: string;
     corrected: string;
@@ -45,7 +45,7 @@ export function useHistory() {
   // 2. SAVE: Helper to add item and persist
   const addToHistory = (
   query: string,
-  type: "GENERATE" | "CORRECT",
+  type: "GENERATE" | "CORRECT"|"EXPLAIN",
   sql?: string,
   schema?: string,
   processedData?: any,

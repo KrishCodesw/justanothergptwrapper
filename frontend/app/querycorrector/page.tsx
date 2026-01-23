@@ -75,7 +75,7 @@ export default function QueryCorrector({
 
   // Sync State
   const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "done">(
-    "idle"
+    "idle",
   );
   useEffect(() => {
     const fetchDbHistory = async () => {
@@ -83,8 +83,7 @@ export default function QueryCorrector({
         try {
           const res = await fetch("/api/corrected_queries/get");
           const data = await res.json();
-          // console.log("API DATA RECEIVED:", data);
-          // ✅ NEW: Save DB history in state
+
           setDbHistory(data.reverse()); // latest first
         } catch (err) {
           console.error("Failed to fetch DB history", err);
@@ -187,7 +186,7 @@ export default function QueryCorrector({
             "CORRECT",
             processedData.corrected,
             undefined,
-            processedData
+            processedData,
           );
 
           // addToHistory(input, processedData.corrected);
@@ -201,7 +200,7 @@ export default function QueryCorrector({
             "CORRECT",
             processedData.corrected,
             undefined,
-            processedData
+            processedData,
           );
         } else {
           setShowLimitModal(true);
@@ -257,7 +256,7 @@ export default function QueryCorrector({
           // 2. Control visibility
           sidebarOpen
             ? "translate-x-0 shadow-2xl lg:shadow-none w-80" // Mobile: Shadow added
-            : "-translate-x-full lg:translate-x-0 lg:w-0 lg:overflow-hidden"
+            : "-translate-x-full lg:translate-x-0 lg:w-0 lg:overflow-hidden",
         )}
       >
         <div className="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white">
@@ -457,7 +456,7 @@ export default function QueryCorrector({
                       <div
                         className={cn(
                           "px-2 py-0.5 rounded text-xs font-bold border capitalize",
-                          getRiskColor(output.risk_level)
+                          getRiskColor(output.risk_level),
                         )}
                       >
                         {output.risk_level}
