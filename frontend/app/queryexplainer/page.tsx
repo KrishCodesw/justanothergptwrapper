@@ -172,9 +172,8 @@ export default function QueryExplainer({
       >
         <div className="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2 font-bold text-slate-800 text-lg">
-            <LayoutGrid className="w-6 h-6 text-indigo-600" />
             <span>
-              Query<span className="text-indigo-600">Explainer</span>
+              Query<span className="text-black/80"> Explainer</span>
             </span>
           </div>
           <button
@@ -192,15 +191,15 @@ export default function QueryExplainer({
         </div>
 
         {/* New Query Button */}
-        <div className="p-4">
+        <div className="p-10">
           <button
             onClick={() => {
               setInput("");
               setResult(null);
             }}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-3 rounded-xl font-medium shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-2 bg-blue-800 text-white px-4 py-3 rounded-br-xl rounded-tl-xl font-medium shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-[0.98]"
           >
-            <Sparkles className="w-4 h-4" /> New Explanation
+            New
           </button>
         </div>
 
@@ -324,7 +323,7 @@ export default function QueryExplainer({
             {result && (
               <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 space-y-6">
                 {/* A. Summary Header Card */}
-                <div className="bg-linear-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 md:p-8 text-white shadow-xl shadow-indigo-200 relative overflow-hidden">
+                <div className="bg-linear from-yellow-900 via-red-100 to-yellow-900 rounded-2xl p-6 md:p-8 text-black/80 shadow-xl shadow-indigo-200 relative overflow-hidden">
                   {/* Background Decor */}
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
@@ -334,7 +333,7 @@ export default function QueryExplainer({
                         <h2 className="text-2xl font-bold tracking-tight">
                           Query Analysis
                         </h2>
-                        <p className="text-indigo-100 text-sm md:text-base max-w-2xl leading-relaxed opacity-90">
+                        <p className="text-black/80 text-sm md:text-base max-w-2xl leading-relaxed opacity-90">
                           {result.summary.purpose}
                         </p>
                       </div>
