@@ -6,7 +6,7 @@ import json
 load_dotenv()
 
 
-class QueryExplainer(AIPlatform):
+class SQLtoER(AIPlatform):
     def __init__(self, api_key: str, structure_sql_ai_systemprompt: str = None):
         self.api_key = api_key
 
