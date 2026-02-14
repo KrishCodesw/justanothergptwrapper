@@ -163,7 +163,7 @@ class RelationshipModel(BaseModel):
 
 class SpecializationModel(BaseModel):
     superclass: str
-    subclasses: List[str]
+    subclasses: List[str]   
     type: str
     participation: str
 
